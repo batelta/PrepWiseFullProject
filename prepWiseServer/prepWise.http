@@ -1,0 +1,6 @@
+@prepWise_HostAddress = http://localhost:5062
+
+GET {{prepWise_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

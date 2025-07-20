@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Software Development",
+    "description": "Focuses on building, testing, and maintaining software systems and applications."
+  },
+  {
+    "id": 2,
+    "name": "Data & AI",
+    "description": "Involves working with data, analytics, and artificial intelligence to drive decisions and automation."
+  },
+  {
+    "id": 3,
+    "name": "Cybersecurity",
+    "description": "Centers on protecting systems, networks, and data from cyber threats."
+  },
+  {
+    "id": 4,
+    "name": "Product & Design",
+    "description": "Combines product strategy, user experience, and interface design to build effective tech solutions."
+  },
+  {
+    "id": 5,
+    "name": "IT Infrastructure & Cloud",
+    "description": "Covers servers, networks, cloud services, and system operations that keep technology running."
+  },
+  {
+    "id": 6,
+    "name": "Project & Business Management",
+    "description": "Manages projects, teams, and IT strategy to deliver business value."
+  },
+  {
+    "id": 7,
+    "name": "Hardware & Embedded Systems",
+    "description": "Focuses on the physical components of technology and the software tightly integrated with them."
+  },
+  {
+    "id": 8,
+    "name": "Emerging Technologies",
+    "description": "Explores new frontiers in tech like robotics, blockchain, AR/VR, and systems architecture."
+  }
+]

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+	  <TargetFramework>net6.0</TargetFramework>
+	  <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+	  <PackageReference Include="Microsoft.Data.SqlClient" Version="4.0.1" />
+	  <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	  <PackageReference Include="System.Security.Permissions" Version="6.0.0" />
+
+  </ItemGroup>
+<ItemGroup>
+		<Folder Include="wwwroot\" />
+		<Folder Include="Uploads\UserFiles\" />
+		<Folder Include="wwwroot\Uploads\Graphs\" />
+	</ItemGroup>	
+
+	</Project>

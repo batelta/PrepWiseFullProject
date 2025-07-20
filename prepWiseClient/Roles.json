@@ -1,0 +1,55 @@
+[
+    { "RoleID": 1, "RoleName": "Software Engineer", "CareerFieldID": 1 },
+    { "RoleID": 2, "RoleName": "Front-End Developer", "CareerFieldID": 1 },
+    { "RoleID": 3, "RoleName": "Back-End Developer", "CareerFieldID": 1 },
+    { "RoleID": 4, "RoleName": "Full-Stack Developer", "CareerFieldID": 1 },
+    { "RoleID": 5, "RoleName": "Mobile Application Developer", "CareerFieldID": 1 },
+    { "RoleID": 6, "RoleName": "Web Developer", "CareerFieldID": 1 },
+    { "RoleID": 7, "RoleName": "Game Developer", "CareerFieldID": 1 },
+    { "RoleID": 8, "RoleName": "Technical Lead", "CareerFieldID": 1 },
+    { "RoleID": 9, "RoleName": "Team Lead", "CareerFieldID": 1 },
+    { "RoleID": 10, "RoleName": "Engineering Manager", "CareerFieldID": 1 },
+  
+    { "RoleID": 11, "RoleName": "Data Analyst", "CareerFieldID": 2 },
+    { "RoleID": 12, "RoleName": "Data Scientist", "CareerFieldID": 2 },
+    { "RoleID": 13, "RoleName": "Data Engineer", "CareerFieldID": 2 },
+    { "RoleID": 14, "RoleName": "Machine Learning Engineer", "CareerFieldID": 2 },
+    { "RoleID": 15, "RoleName": "Computer Vision Engineer", "CareerFieldID": 2 },
+    { "RoleID": 16, "RoleName": "Business Intelligence Analyst", "CareerFieldID": 2 },
+    { "RoleID": 17, "RoleName": "Data Team Lead", "CareerFieldID": 2 },
+  
+    { "RoleID": 18, "RoleName": "Cybersecurity Analyst", "CareerFieldID": 3 },
+    { "RoleID": 19, "RoleName": "IT Security Analyst", "CareerFieldID": 3 },
+    { "RoleID": 20, "RoleName": "Cybersecurity Team Lead", "CareerFieldID": 3 },
+  
+    { "RoleID": 21, "RoleName": "Product Manager", "CareerFieldID": 4 },
+    { "RoleID": 22, "RoleName": "UX/UI Designer", "CareerFieldID": 4 },
+    { "RoleID": 23, "RoleName": "Technical Writer", "CareerFieldID": 4 },
+    { "RoleID": 24, "RoleName": "Design Team Lead", "CareerFieldID": 4 },
+  
+    { "RoleID": 25, "RoleName": "DevOps Engineer", "CareerFieldID": 5 },
+    { "RoleID": 26, "RoleName": "Cloud Engineer", "CareerFieldID": 5 },
+    { "RoleID": 27, "RoleName": "Cloud Architect", "CareerFieldID": 5 },
+    { "RoleID": 28, "RoleName": "Site Reliability Engineer", "CareerFieldID": 5 },
+    { "RoleID": 29, "RoleName": "Database Administrator", "CareerFieldID": 5 },
+    { "RoleID": 30, "RoleName": "Network Engineer", "CareerFieldID": 5 },
+    { "RoleID": 31, "RoleName": "Technical Support Specialist", "CareerFieldID": 5 },
+    { "RoleID": 32, "RoleName": "Infrastructure Team Lead", "CareerFieldID": 5 },
+  
+    { "RoleID": 33, "RoleName": "Project Manager", "CareerFieldID": 6 },
+    { "RoleID": 34, "RoleName": "IT Project Manager", "CareerFieldID": 6 },
+    { "RoleID": 35, "RoleName": "IT Consultant", "CareerFieldID": 6 },
+    { "RoleID": 36, "RoleName": "Project Team Lead", "CareerFieldID": 6 },
+  
+    { "RoleID": 37, "RoleName": "Hardware Engineer", "CareerFieldID": 7 },
+    { "RoleID": 38, "RoleName": "Embedded Systems Engineer", "CareerFieldID": 7 },
+    { "RoleID": 39, "RoleName": "Research and Development Engineer", "CareerFieldID": 7 },
+    { "RoleID": 40, "RoleName": "Hardware Team Lead", "CareerFieldID": 7 },
+  
+    { "RoleID": 41, "RoleName": "Robotics Engineer", "CareerFieldID": 8 },
+    { "RoleID": 42, "RoleName": "AR/VR Developer", "CareerFieldID": 8 },
+    { "RoleID": 43, "RoleName": "Blockchain Developer", "CareerFieldID": 8 },
+    { "RoleID": 44, "RoleName": "Systems Architect", "CareerFieldID": 8 },
+    { "RoleID": 45, "RoleName": "Emerging Tech Team Lead", "CareerFieldID": 8 }
+  ]
+  
