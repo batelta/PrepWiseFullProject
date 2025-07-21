@@ -48,9 +48,8 @@ export default function GlobalNotifications({ userEmail }) {
     };
   }, [userEmailLower]); // שינוי מ-userEmail ל-userEmailLower
 
-
 // פונקציה לשליפת נתוני מנטור מהשרת
-const fetchMentorData = async (mentorID) => {
+/*const fetchMentorData = async (mentorID) => {
   try {
     // אם כבר יש לנו את הנתונים - החזר מהמטמון
     if (mentorsData.has(mentorID)) {
@@ -72,8 +71,7 @@ const fetchMentorData = async (mentorID) => {
     return { name: 'Unknown Mentor', email: '' };
   }
 };
-
-
+*/
 
   const loadNotificationsFromStorage = async () => {
     try {
@@ -272,17 +270,19 @@ const fetchMentorData = async (mentorID) => {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         tasksArray.push({
-          id: doc.id,
-          taskID: data.taskID,
-          sessionID: data.sessionID,
-          createdAt: data.createdAt,
-          jobSeekerEmail: data.jobSeekerEmail,
-          /////
-          title: data.title,
-        description: data.description,
-        mentorID: data.mentorID,
-    
-        });
+        id: doc.id,
+    taskID: data.taskID,
+    sessionID: data.sessionID,
+    createdAt: data.createdAt,
+    jobSeekerEmail: data.jobSeekerEmail,
+    // ✅ פרטי המשימה והמנטור
+    title: data.title,
+    description: data.description,
+    mentorID: data.mentorID,
+     mentorName: data.mentorName, 
+    mentorFirstName: data.mentorFirstName, 
+    mentorLastName: data.mentorLastName, 
+      });
       });
 
       // ממיין לפי createdAt בצד הלקוח
@@ -316,19 +316,21 @@ const fetchMentorData = async (mentorID) => {
      for (const [docId, taskData] of currentTasks) {
       if (!prevTasksRef.current.has(docId) && !viewedTasksSet.has(docId)) {
         // שלוף נתוני המנטור
-        const mentorData = await fetchMentorData(taskData.mentorID);
+        //const mentorData = await fetchMentorData(taskData.mentorID);
         
         // הוסף את נתוני המנטור למשימה
-        const taskWithMentor = {
+        /*const taskWithMentor = {
           ...taskData,
           mentorName: mentorData.name || mentorData.firstName || 'Unknown',
           mentorEmail: mentorData.email
-        };
+        };*/
 
         const newTaskNotification = {
           id: docId + '_new_task_' + Date.now(),
           type: 'task',
-          task: taskWithMentor, // ✅ עם נתוני המנטור
+          task: {...taskData,
+          mentorName: taskData.mentorName || 'Unknown Mentor'
+          }, // ✅ עם נתוני המנטור
           timestamp: new Date(),
           read: false
         };
@@ -338,7 +340,10 @@ const fetchMentorData = async (mentorID) => {
 
         setNotificationModal({
           visible: true,
-          data: taskWithMentor, // ✅ עם נתוני המנטור
+          data: {
+        ...taskData,
+        mentorName: taskData.mentorName || 'Unknown Mentor'
+      }, // ✅ עם נתוני המנטור
           type: 'task'
         });
       }

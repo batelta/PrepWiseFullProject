@@ -347,7 +347,7 @@ const pickImage = async () => {
       </View>
       )}     
     
-          <Image source={require("../prepWise/assets/backgroundProfileImage2.jpg")} style={appliedStyles.headerBackground} />
+          <Image source={require("./assets/backgroundProfileImage2.jpg")} style={appliedStyles.headerBackground} />
           {/**image */}
 
           <View style={appliedStyles.imageContainer}>

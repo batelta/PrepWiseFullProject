@@ -231,19 +231,51 @@ console.log("🎨 Render - sessions:", sessions.map(s => s.sessionID));
                 </Card>
               </TouchableOpacity>
             ))}
-            <TouchableOpacity
-                onPress={() => {
-                 setSelectedId("add"); // ⬅️ flag to trigger empty session
-                }}
-                style={styles.addButton}
-              >
-                <MaterialIcons
-                  name="add-circle-outline"
-                  size={24}
-                  color="#b9a7f2"
-                />
-                <Text style={styles.addButtonText}>Add New Session</Text>
-              </TouchableOpacity>
+        <TouchableOpacity
+  onPress={async () => {
+    if (userType === 'mentor') {
+      // למנטור: פותח טופס הוספה כמו עכשיו
+      setSelectedId("add");
+    } else {
+      // למחפש עבודה: שולח בקשה לשרת ליצור סשן חדש עם סטטוס pending
+      try {
+        console.log("for the request:",jobseekerID,mentorID,JourneyID)
+        const response = await fetch(`${apiUrlStart}/api/Session/requestSession/${jobseekerID}/${mentorID}/${JourneyID}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobseekerID: jobseekerID,
+            mentorID: mentorID,
+            journeyID: JourneyID,
+            status: 'pending',
+          }),
+        });
+        if (response.ok) {
+          const newSession = await response.json();
+          // רענון הרשימה ובחירת הסשן החדש
+          await refreshSessions(newSession.sessionID);
+          setSelectedId(newSession.sessionID);
+          setPopupMessage("Session request sent successfully.");
+          setSuccessPopupVisible(true);
+        } else {
+          const errorData = await response.json();
+          setErrPopupMessage("Failed to send session request.");
+          setErrorPopupVisible(true);
+        }
+      } catch (error) {
+        setErrPopupMessage("Network error. Please try again.");
+        setErrorPopupVisible(true);
+      }
+    }
+  }}
+  style={styles.addButton}
+>
+  <MaterialIcons name="add-circle-outline" size={24} color="#b9a7f2" />
+  <Text style={styles.addButtonText}>
+    {userType === 'mentor' ? "Add New Session" : "Request New Session"}
+  </Text>
+</TouchableOpacity>
+
           </View>
   
           {/* Right Pane */}
@@ -255,7 +287,9 @@ console.log("🎨 Render - sessions:", sessions.map(s => s.sessionID));
         style={styles.scheduleButton}
         onPress={() => setShowSessionForm(true)}
       >
-        <Text style={styles.buttonText}>Schedule your first session</Text>
+<Text style={styles.buttonText}>
+  {userType === 'mentor' ? 'Schedule your first session' : 'Request your first session'}
+</Text>
       </TouchableOpacity>
     </View>
   ) : ((selectedId === "new" && showSessionForm) || selectedId === "add") ? (

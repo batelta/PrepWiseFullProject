@@ -117,6 +117,65 @@ namespace prepWise.Controllers
 
 
 
+        [HttpPost("requestSession/{jobseekerID}/{mentorID}/{journeyID}")]
+        public IActionResult RequestSession( int journeyID)
+        {
+            try
+            {
+                if (journeyID <= 0)
+                {
+                    return BadRequest("JourneyID is required.");
+                }
+
+                // יצירת אובייקט סשן חדש עם סטטוס "pending"
+                Session newSession = new Session
+                {
+                    JourneyID = journeyID,
+                    Status = "pending",
+                    Notes = null, // או "" אם צריך
+                    ScheduledAt = null // לא נקבע עדיין
+                };
+
+                Session bl = new Session();
+                int newId = bl.InsertSession(newSession);
+
+                return Ok(new { sessionID = newId });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error: " + ex.Message);
+            }
+        }
+        [HttpGet("PendingSessionsForMentor/{mentorId}")]
+        public IActionResult GetPendingSessionsForMentor(int mentorId)
+        {
+            try
+            {
+                Session s = new Session();
+                List<MentorSessionView> pendingSessions = s.GetPendingSessionsForMentor(mentorId);
+                return Ok(pendingSessions);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPost("approve/{sessionID}")]
+        public bool ApproveSession(int sessionID)
+        {
+            Session session = new Session();
+            return session.ApproveSession(sessionID);
+        }
+
+        [HttpPost("reject/{sessionID}")]
+        public bool RejectSession(int sessionID)
+        {
+            Session session = new Session();
+            return session.RejectSession(sessionID);
+        }
+
+
         [HttpGet("{sessionId}")]
         public IActionResult GetSessionForUser(int sessionId)
         {

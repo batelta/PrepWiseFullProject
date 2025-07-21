@@ -55,8 +55,6 @@ const Profile = () => {
 
   const navigation = useNavigation();
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-
   // משתנה לשמירת פרטי המשתמש
   const [user, setUser] = useState({
     firstName: "",
@@ -176,7 +174,7 @@ if (!response.ok) {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Image
-          source={require("../prepWise/assets/backgroundProfileImage.jpg")}
+          source={require("./assets/backgroundProfileImage.jpg")}
           style={styles.headerBackground}
         />
 
@@ -219,28 +217,8 @@ if (!response.ok) {
                 </Text>
               </TouchableOpacity>
 
-              {/**NOTIFICATION */}
-              <TouchableOpacity
-                style={styles.option}
-                onPress={() => setNotificationsEnabled(!notificationsEnabled)}
-              >
-                <Text style={styles.optionText}>
-                  <Ionicons
-                    name="notifications-outline"
-                    size={20}
-                    color={notificationsEnabled ? "black" : "gray"}
-                  />{" "}
-                  Notifications
-                </Text>
-                <Switch
-                  value={notificationsEnabled}
-                  onValueChange={() =>
-                    setNotificationsEnabled(!notificationsEnabled)
-                  }
-                  trackColor={{ false: "#D3D3D3", true: "#9FF9D5" }}
-                />
                 {/**DELETE ACCOUNT */}
-              </TouchableOpacity>
+              
               <TouchableOpacity
                 style={styles.option}
                 onPress={() => deleteUserProfile()}
@@ -445,3 +423,4 @@ name: {
 });
 
 export default Profile;
+

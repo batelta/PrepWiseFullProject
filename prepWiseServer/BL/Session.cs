@@ -8,7 +8,7 @@ namespace prepWise.BL
         public int SessionID { get; set; }
         //public int MatchID { get; set; }
         public int JourneyID { get; set; }
-        public DateTime ScheduledAt { get; set; }
+        public DateTime? ScheduledAt { get; set; }
         public string Status { get; set; }
         public string? Notes { get; set; }
         public string? MeetingUrl { get; set; }
@@ -49,6 +49,19 @@ namespace prepWise.BL
         public List<Session> GetSessionsByUsersIDs(int jobseekerID,int mentorID)
         {
             return db.GetSessionsByUsersIDs(jobseekerID, mentorID);
+        }
+        public List<MentorSessionView> GetPendingSessionsForMentor(int mentorId)
+        {
+            return db.GetPendingSessionsForMentor(mentorId);
+        }
+        public bool ApproveSession(int sessionID)
+        {
+            return db.UpdateSessionStatus(sessionID, "approved");
+        }
+
+        public bool RejectSession(int sessionID)
+        {
+            return db.UpdateSessionStatus(sessionID, "rejected");
         }
 
         public bool UpdateSession(Session session)

@@ -51,6 +51,8 @@ export default function Session(props){
   const navigation = useNavigation();
 
 
+  
+
  // Optional: If you need to track files in parent component
   const [sessionFileCount, setSessionFileCount] = useState(0);
 
@@ -577,30 +579,48 @@ const addTask = async () => {
       body: JSON.stringify({ 
         title: newTaskTitle, 
         description: newTaskDesc,
-        jobSeekerID:jobseekerID
+        jobSeekerID: jobseekerID
        })
     });
 
     if (!res.ok) throw new Error("Failed to add task");
-    const data = await res.json(); // תקבלי פה את ה-taskID החדש מהשרת
+    const data = await res.json();
 
-    // 🔥 שמירה בפיירבייס
+    // שליפת נתוני הג'ובסיקר
+    const userRes = await fetch(`${apiUrlStart}/api/Users?userId=${jobseekerID}`);
+    const userData = await userRes.json();
+
+    // ✅ שליפת נתוני המנטור מה-API
+    const mentorRes = await fetch(`${apiUrlStart}/api/Users?userId=${mentorID}`);
+    const mentorData = await mentorRes.json();
+    const mentorFullName = `${mentorData.firstName || ''} ${mentorData.lastName || ''}`.trim() || 'Unknown Mentor';
+
+    // שמירה ב-Firebase עם כל המידע הנדרש
     await addDoc(collection(db, "tasks"), {
-      taskID: data.taskID,         // מתוך השרת שלך
-      sessionID: Number(sessionId), // ודאי שזה מספר
-      createdAt: serverTimestamp() // או new Date() אם את רוצה תאריך מקומי
+      taskID: data.taskID,
+      sessionID: Number(sessionId),
+      jobSeekerID: jobseekerID,
+      jobSeekerEmail: userData.email.toLowerCase(),
+      // ✅ פרטי המנטור
+      mentorID: mentorID,
+      mentorName: mentorFullName, // ✅ שם מלא
+      mentorFirstName: mentorData.firstName || '',
+      mentorLastName: mentorData.lastName || '',
+      mentorEmail: mentorData.email || '',
+      // פרטי המשימה
+      title: newTaskTitle,
+      description: newTaskDesc,
+      createdAt: serverTimestamp()
     });
 
-    // 🚀 טען משימות מחדש
     getTasks(sessionId);
-
-    // נקה שדות
     setNewTaskTitle("");
     setNewTaskDesc("");
   } catch (err) {
     console.error("Error adding task:", err);
   }
 };
+
 
 const toggleTaskCompletion = async (taskId) => {
   const alreadyCompleted = completedTasks.includes(taskId);

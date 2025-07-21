@@ -153,6 +153,81 @@ public class SessionDB
         return sessions;
     }
 
+
+    public List<MentorSessionView> GetPendingSessionsForMentor(int mentorId)
+    {
+        SqlConnection con = connect("myProjDB");
+
+        Dictionary<string, object> paramDic = new Dictionary<string, object>
+        {
+            ["@mentorId"] = mentorId
+        };
+
+        SqlCommand cmd = CreateCommandWithStoredProcedureGeneral("SP_GetPendingSessionsForMentor", con, paramDic);
+        SqlDataReader dr = cmd.ExecuteReader();
+
+        List<MentorSessionView> sessions = new List<MentorSessionView>();
+        while (dr.Read())
+        {
+            sessions.Add(new MentorSessionView
+            {
+                SessionID = (int)dr["SessionID"],
+                JourneyID = (int)dr["JourneyID"],
+                ScheduledAt = dr["ScheduledAt"] == DBNull.Value ? null : (DateTime?)dr["ScheduledAt"],
+                Status = dr["Status"].ToString(),
+                Notes = dr["Notes"]?.ToString(),
+
+                JobSeekerID = (int)dr["JobSeekerID"],
+                JobSeekerFirstName = dr["FirstName"].ToString(),
+                JobSeekerLastName = dr["LastName"].ToString(),
+                JobSeekerPicture = dr["Picture"]?.ToString()
+            });
+        }
+
+        con.Close();
+        return sessions;
+    }
+
+
+
+    //Update session's status
+    public bool UpdateSessionStatus(int sessionID, string status)
+    {
+        try
+        {
+            SqlConnection con = connect("myProjDB");
+
+            Dictionary<string, object> paramDic = new Dictionary<string, object>
+            {
+                ["@SessionID"] = sessionID,
+                ["@Status"] = status
+            };
+
+            SqlCommand cmd = CreateCommandWithStoredProcedureGeneral("sp_UpdateSessionStatus", con, paramDic);
+
+            // הוספת פרמטר חזרה לבדיקה אם הפעולה הצליחה
+            SqlParameter returnParameter = new SqlParameter("@ReturnValue", SqlDbType.Int)
+            {
+                Direction = ParameterDirection.ReturnValue
+            };
+            cmd.Parameters.Add(returnParameter);
+
+            int rowsAffected = cmd.ExecuteNonQuery();
+            con.Close();
+
+            // בדיקת ערך החזרה מהפרוצדורה
+            int returnValue = (int)returnParameter.Value;
+            return returnValue == 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating session status: {ex.Message}");
+            return false;
+        }
+    }
+
+
+
     ///NOT USING THIS ONE
 
     public Session GetSessionById(int sessionId)
@@ -484,9 +559,9 @@ public class SessionDB
     {
         public int SessionID { get; set; }
         public int JourneyID { get; set; }
-        public DateTime ScheduledAt { get; set; }
+        public DateTime? ScheduledAt { get; set; }
         public string Status { get; set; }
-        public string Notes { get; set; }
+        public string? Notes { get; set; }
 
         // Minimal user fields for display
         public int JobSeekerID { get; set; }

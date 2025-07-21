@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, Image,ActivityIndicator, TouchableOpacity, Platform, StyleSheet, SafeAreaView, Alert } from "react-native";
 import NavBarMentor from "./NavBarMentor";
-import { Card } from "react-native-paper";
+import { Card,Button } from "react-native-paper";
 import { useEffect, useState } from "react";
 import { useFonts } from 'expo-font';
 import { Inter_400Regular,
@@ -37,6 +37,9 @@ export default function HomePageMentor() {
       //for offers
   const [hasOffers, setHasOffers] = useState(false);
   const [hasFetchedOffers, setHasFetchedOffers] = useState(false);
+//for pending
+const [pendingSessions, setPendingSessions] = useState([]);
+const [loadingPendingSessions, setLoadingPendingSessions] = useState(false);
 
    useEffect(() => {
     if (Loggeduser) {
@@ -48,6 +51,8 @@ export default function HomePageMentor() {
         fetchUserMatches(Loggeduser.userId || Loggeduser.id); 
         // טעינת הסשנים הקרובים - הוספה חדשה
         fetchUpcomingSessions(Loggeduser.userId || Loggeduser.id);
+        //pending sessions for mentor
+        fetchPendingSessions(Loggeduser.userId || Loggeduser.id)
       }
     }, [Loggeduser]);
 
@@ -80,6 +85,37 @@ const fetchUpcomingSessions = async (mentorId) => {
         setLoadingSessions(false);
     }
 };
+//loading pending sessions 
+const fetchPendingSessions = async (mentorId) => {
+            setLoadingPendingSessions(true); // <-- start loading
+
+    try {
+        const API_URL = `${apiUrlStart}/api/Session/PendingSessionsForMentor/${mentorId}`;
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const sessionsData = await response.json();
+            setPendingSessions(sessionsData);
+            console.log('Pending sessions loaded:', sessionsData);
+        } else {
+            console.log('Failed to fetch pending sessions');
+            setPendingSessions([]);
+        }
+    } catch (error) {
+        console.error('Error fetching pending sessions:', error);
+        setPendingSessions([]);
+      } finally {
+        setLoadingPendingSessions(false); // <-- stop loading
+    }
+};
+
+
+
 
 // פונקציה להצגת תאריך ושעה בפורמט יפה
 const formatSessionDateTime = (dateTime) => {
@@ -300,7 +336,6 @@ const renderUpcomingSessions = () => {
             </Card>
         );
     }
-
     return (
         <Card style={appliedStyles.sessionsMainCard}>
             <Card.Content style={appliedStyles.sessionsMainCardContent}>
@@ -395,7 +430,75 @@ const renderUpcomingSessions = () => {
         </Card>
     );
 };
-      
+     
+//function for pending sessions 
+const renderPendingSessions = () => {
+    if (loadingPendingSessions) {
+        return (
+            <Card style={appliedStyles.Applicationcard}>
+                <Card.Content style={appliedStyles.ApplicationCardcontent}>
+                    <Text style={appliedStyles.sectionDescription}>
+                        Loading pending sessions...
+                    </Text>
+                </Card.Content>
+            </Card>
+        );
+    }
+
+    if (pendingSessions.length === 0) {
+        return (
+            <Card style={appliedStyles.Applicationcard}>
+                <Card.Content style={appliedStyles.ApplicationCardcontent}>
+                    <Text style={appliedStyles.sectionDescription}>
+                        You have no pending session requests.
+                    </Text>
+                </Card.Content>
+            </Card>
+        );
+    }
+
+  return pendingSessions.map((session) => (
+    <Card key={session.sessionID} style={appliedStyles.Applicationcard}>
+        <Card.Content style={appliedStyles.ApplicationCardcontent}>
+            <View style={appliedStyles.sessionCard}>
+                <View style={appliedStyles.sessionHeader}>
+                    <Image 
+                        source={getMatchProfileImage(session.jobSeekerPicture)} 
+                        style={appliedStyles.sessionProfileImage}
+                    />
+                    <View style={appliedStyles.sessionInfo}>
+                        <Text style={appliedStyles.sessionName}>
+                            {session.jobSeekerFirstName} {session.jobSeekerLastName}
+                        </Text>
+                    </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
+                    <Button
+                        icon="check"
+                        mode="contained"
+                        onPress={() => handleApprove(session.sessionID)}
+                        style={{ marginRight: 10, backgroundColor: 'green' }}
+                    >
+                        Approve
+                    </Button>
+                    <Button
+                        icon="close"
+                        mode="contained"
+                        onPress={() => handleReject(session.sessionID)}
+                        style={{ backgroundColor: 'red' }}
+                    >
+                        Reject
+                    </Button>
+                </View>
+            </View>
+        </Card.Content>
+    </Card>
+));
+
+
+};
+
     const LogoImage = () => {
       if (Platform.OS !== "web") {
           return <Image source={require('../assets/prepWise Logo.png')} style={appliedStyles.logo} />;
@@ -442,6 +545,11 @@ const renderUpcomingSessions = () => {
                         <Text style={appliedStyles.ApplicationsectionTitle}>Upcoming Sessions💻</Text>
                         {renderUpcomingSessions()}
                     </View>
+                    <View style={appliedStyles.Applicationsection}>
+    <Text style={appliedStyles.ApplicationsectionTitle}>Pending Sessions 🕒</Text>
+    {renderPendingSessions()}
+</View>
+
                 </View>
 
                 <TouchableOpacity

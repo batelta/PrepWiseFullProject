@@ -203,8 +203,9 @@ export default function ChatScreen({ route, navigation }) {
   const renderActions = (props) => (
     <View style={styles.actionsContainer}>
       <TouchableOpacity onPress={handleSessionPress} style={styles.sessionButton}>
-        <Text>Add New Session</Text>
-       </TouchableOpacity>
+        {/*<Icon name="video-call" size={24} color="#9FF9D5" />*/}
+        <Text style={styles.newSessionButton}>Add New Session</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -265,6 +266,10 @@ const styles = StyleSheet.create({
   sessionButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
   },
+  newSessionButton:{
+  color: '#9FF9D5',
+  fontFamily:"Inter_400Regular",
+  }
+ 
 });
