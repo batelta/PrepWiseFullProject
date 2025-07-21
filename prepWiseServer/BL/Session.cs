@@ -54,6 +54,11 @@ namespace prepWise.BL
         {
             return db.GetPendingSessionsForMentor(mentorId);
         }
+        public bool CheckIfPendingSessionExists(int journeyID)
+        {
+            return db.CheckIfPendingSessionExists(journeyID);
+        }
+
         public bool ApproveSession(int sessionID)
         {
             return db.UpdateSessionStatus(sessionID, "approved");

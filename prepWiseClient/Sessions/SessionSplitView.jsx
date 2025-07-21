@@ -259,11 +259,18 @@ console.log("🎨 Render - sessions:", sessions.map(s => s.sessionID));
           setSuccessPopupVisible(true);
         } else {
           const errorData = await response.json();
-          setErrPopupMessage("Failed to send session request.");
-          setErrorPopupVisible(true);
+const errorMessage = errorData.message;
+
+if (errorMessage === "A pending session already exists for this journey.") {
+  setErrPopupMessage("You already requested a session with this mentor.");
+} else {
+  setErrPopupMessage("Something went wrong. Please try again.");
+}
+
+setErrorPopupVisible(true);
         }
       } catch (error) {
-        setErrPopupMessage("Network error. Please try again.");
+        setErrPopupMessage("Unexpected error. Please try again.");
         setErrorPopupVisible(true);
       }
     }
@@ -282,7 +289,7 @@ console.log("🎨 Render - sessions:", sessions.map(s => s.sessionID));
        <View style={styles.rightPane}>
   {selectedId === "new" && !showSessionForm ? (
     <View style={{ padding: 20 }}>
-      <Text style={styles.subtitle}>You haven't had any sessions with this mentor yet.</Text>
+      <Text style={styles.subtitle}>{`You haven't had any sessions with ${FirstName} ${LastName} yet.`}</Text>
       <TouchableOpacity
         style={styles.scheduleButton}
         onPress={() => setShowSessionForm(true)}

@@ -292,14 +292,17 @@ console.log("comment:", comment);
       if (response.ok) {
         const sessionData = await response.json();
         // Populate form fields with existing data
-        const formattedDate = new Date(sessionData.scheduledAt).toLocaleString('en-US', {
-  year: 'numeric',
-  month: 'long', // "June"
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: true, // to get AM/PM
-});
+      const formattedDate = sessionData.scheduledAt
+  ? new Date(sessionData.scheduledAt).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long', // "June"
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true, // to get AM/PM
+    })
+  : "Not scheduled yet"; // or 'Not scheduled yet'
+
 
 setSelectedDateTimeForView(formattedDate);
 if (!wasManuallyChanged) {
@@ -783,6 +786,8 @@ const isValidMeetingLink = (link) => {
     </Text>
     </View>
     <View >
+
+      
     <Text style={[appliedStyles.subtitlesmall, { color: '#555' }]}>
       If you'd like to change it, you can pick a new time below or talk to {OtherUserName} first.
     </Text>

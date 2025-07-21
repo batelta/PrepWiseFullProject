@@ -142,7 +142,7 @@ public class SessionDB
             {
                 SessionID = (int)dr["SessionID"],
                 JourneyID = (int)dr["JourneyID"],
-                ScheduledAt = (DateTime)dr["ScheduledAt"],
+                ScheduledAt = dr["ScheduledAt"] == DBNull.Value ? null : (DateTime?)dr["ScheduledAt"],
                 Status = dr["status"].ToString(),
                 Notes = dr["notes"]?.ToString(),
                 MeetingUrl = dr["MeetingUrl"]?.ToString(),
@@ -188,6 +188,32 @@ public class SessionDB
         return sessions;
     }
 
+    public bool CheckIfPendingSessionExists(int journeyID)
+    {
+        SqlConnection con = connect("myProjDB");
+
+        Dictionary<string, object> paramDic = new Dictionary<string, object>
+        {
+            ["@JourneyID"] = journeyID
+        };
+
+        SqlCommand cmd = CreateCommandWithStoredProcedureGeneral("SP_CheckIfPendingSessionExists", con, paramDic);
+
+        try
+        {
+            object result = cmd.ExecuteScalar();
+            return result != null && Convert.ToInt32(result) > 0;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("CheckIfPendingSessionExists error: " + ex.Message);
+            throw;
+        }
+        finally
+        {
+            con.Close();
+        }
+    }
 
 
     //Update session's status
@@ -228,7 +254,6 @@ public class SessionDB
 
 
 
-    ///NOT USING THIS ONE
 
     public Session GetSessionById(int sessionId)
     {
@@ -249,7 +274,7 @@ public class SessionDB
             {
                 SessionID = (int)dr["SessionID"],
                 JourneyID = (int)dr["JourneyID"],
-                ScheduledAt = (DateTime)dr["ScheduledAt"],
+                ScheduledAt = dr["ScheduledAt"] == DBNull.Value ? null : (DateTime?)dr["ScheduledAt"],
                 Status = dr["status"].ToString(),
                 Notes = dr["notes"]?.ToString(),
                 MeetingUrl = dr["MeetingUrl"]?.ToString(),
@@ -268,7 +293,7 @@ public class SessionDB
         Dictionary<string, object> paramDic = new Dictionary<string, object>
         {
             ["@SessionID"] = session.SessionID,
-            ["@ScheduledAt"] = session.ScheduledAt,
+            ["@ScheduledAt"] = session.ScheduledAt ??(object)DBNull.Value,
             ["@Status"] = session.Status ?? "scheduled",
             ["@MeetingUrl"] = session.MeetingUrl ?? (object)DBNull.Value,
             ["@Notes"] = session.Notes ?? (object)DBNull.Value

@@ -124,9 +124,16 @@ namespace prepWise.Controllers
             {
                 if (journeyID <= 0)
                 {
-                    return BadRequest("JourneyID is required.");
+                    return BadRequest(new { message = "JourneyID is required." });
                 }
+                Session bl = new Session();
 
+                bool existsPending = bl.CheckIfPendingSessionExists(journeyID);
+                if (existsPending)
+                {
+                    return BadRequest(new { message = "A pending session already exists for this journey." });
+
+                }
                 // יצירת אובייקט סשן חדש עם סטטוס "pending"
                 Session newSession = new Session
                 {
@@ -136,14 +143,13 @@ namespace prepWise.Controllers
                     ScheduledAt = null // לא נקבע עדיין
                 };
 
-                Session bl = new Session();
                 int newId = bl.InsertSession(newSession);
 
                 return Ok(new { sessionID = newId });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Error: " + ex.Message);
+                return StatusCode(500, new { message = "Error: " + ex.Message });
             }
         }
         [HttpGet("PendingSessionsForMentor/{mentorId}")]

@@ -243,6 +243,60 @@ const formatSessionDateTime = (dateTime) => {
         return { uri: picture };
     };
 
+
+const handleApprove = async (sessionID,jobSeekerID,journeyID,mentorID,firstName,lastName) => {
+  try {
+    const response = await fetch(`${apiUrlStart}/api/session/approve/${sessionID}`, {
+      method: 'POST',
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result === true) {
+        console.log('Session approved successfully.');
+        // Optional: update state or UI to reflect the approval
+         navigation.navigate('SessionSplitView', {
+          initialSessionId: sessionID,
+            jobseekerID:jobSeekerID,
+            mentorID: mentorID,
+            JourneyID: journeyID,
+            FirstName: firstName,
+          LastName: lastName,
+        });
+      } else {
+        console.warn('Approval failed on server.');
+      }
+    } else {
+      console.error('Failed to approve session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error approving session:', error);
+  }
+};
+
+const handleReject = async (sessionID) => {
+  try {
+    const response = await fetch(`${apiUrlStart}/api/session/reject/${sessionID}`, {
+      method: 'POST',
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result === true) {
+        console.log('Session rejected successfully.');
+        // Optional: update state or UI to reflect the rejection
+      } else {
+        console.warn('Rejection failed on server.');
+      }
+    } else {
+      console.error('Failed to reject session:', response.status);
+    }
+  } catch (error) {
+    console.error('Error rejecting session:', error);
+  }
+};
+
+
     // פונקציה להצגת רשימת ההתאמות
     const renderMatches = () => {
         if (loadingMatches) {
@@ -457,48 +511,71 @@ const renderPendingSessions = () => {
         );
     }
 
-  return pendingSessions.map((session) => (
-    <Card key={session.sessionID} style={appliedStyles.Applicationcard}>
-        <Card.Content style={appliedStyles.ApplicationCardcontent}>
-            <View style={appliedStyles.sessionCard}>
-                <View style={appliedStyles.sessionHeader}>
-                    <Image 
-                        source={getMatchProfileImage(session.jobSeekerPicture)} 
-                        style={appliedStyles.sessionProfileImage}
-                    />
-                    <View style={appliedStyles.sessionInfo}>
-                        <Text style={appliedStyles.sessionName}>
-                            {session.jobSeekerFirstName} {session.jobSeekerLastName}
-                        </Text>
-                    </View>
-                </View>
+return (
+    <Card style={appliedStyles.sessionsMainCardPending}>
+        <Card.Content style={appliedStyles.sessionsMainCardContent}>
+            {/* Scroll indicator at the top */}
+            <View style={appliedStyles.scrollIndicator}>
+                <Text style={appliedStyles.scrollIndicatorText}>↓ Scroll down to see more sessions ↓</Text>
+            </View>
+            
+            <ScrollView 
+                vertical 
+                showsVerticalScrollIndicator={true}
+                style={appliedStyles.sessionsScrollView}
+                nestedScrollEnabled={true}
+                contentContainerStyle={appliedStyles.sessionsScrollContent}
+            >
+                {pendingSessions.map((session) => (
+                    <Card key={session.sessionID} style={appliedStyles.Applicationcard}>
+                        <Card.Content style={appliedStyles.ApplicationCardcontent}>
+                            <View style={appliedStyles.sessionCard}>
+                                <View style={appliedStyles.sessionHeader}>
+                                    <Image 
+                                        source={getMatchProfileImage(session.jobSeekerPicture)} 
+                                        style={appliedStyles.sessionProfileImage}
+                                    />
+                                    <View style={appliedStyles.sessionInfo}>
+                                        <Text style={appliedStyles.sessionName}>
+                                            {session.jobSeekerFirstName} {session.jobSeekerLastName}
+                                        </Text>
+                                    </View>
+                                </View>
 
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
-                    <Button
-                        icon="check"
-                        mode="contained"
-                        onPress={() => handleApprove(session.sessionID)}
-                        style={{ marginRight: 10, backgroundColor: 'green' }}
-                    >
-                        Approve
-                    </Button>
-                    <Button
-                        icon="close"
-                        mode="contained"
-                        onPress={() => handleReject(session.sessionID)}
-                        style={{ backgroundColor: 'red' }}
-                    >
-                        Reject
-                    </Button>
-                </View>
+                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10 }}>
+                                    <Button
+                                        icon="check"
+                                        mode="contained"
+                                        onPress={() => handleApprove(session.sessionID,session.jobSeekerID,session.journeyID,Loggeduser.id,session.jobSeekerFirstName,session.jobSeekerLastName
+)}
+                                        style={{ marginRight: 10, backgroundColor: 'green' }}
+                                    >
+                                        Approve
+                                    </Button>
+                                    <Button
+                                        icon="close"
+                                        mode="contained"
+                                        onPress={() => handleReject(session.sessionID)}
+                                        style={{ backgroundColor: 'red' }}
+                                    >
+                                        Reject
+                                    </Button>
+                                </View>
+                            </View>
+                        </Card.Content>
+                    </Card>
+                ))}
+            </ScrollView>
+            
+            {/* Scroll indicator at the bottom */}
+            <View style={appliedStyles.scrollIndicatorBottom}>
+                <Text style={appliedStyles.scrollIndicatorText}>↑ Scroll up to see previous sessions ↑</Text>
             </View>
         </Card.Content>
     </Card>
-));
-
+);
 
 };
-
     const LogoImage = () => {
       if (Platform.OS !== "web") {
           return <Image source={require('../assets/prepWise Logo.png')} style={appliedStyles.logo} />;
@@ -545,13 +622,13 @@ const renderPendingSessions = () => {
                         <Text style={appliedStyles.ApplicationsectionTitle}>Upcoming Sessions💻</Text>
                         {renderUpcomingSessions()}
                     </View>
-                    <View style={appliedStyles.Applicationsection}>
+             
+
+                </View>
+       <View style={appliedStyles.Pendingsection}>
     <Text style={appliedStyles.ApplicationsectionTitle}>Pending Sessions 🕒</Text>
     {renderPendingSessions()}
 </View>
-
-                </View>
-
                 <TouchableOpacity
                     style={appliedStyles.chatIcon}
                     onPress={() => setShowChat(!showChat)}
@@ -708,6 +785,11 @@ const styles = StyleSheet.create({
     },
     Applicationsection: {
         marginTop: 24,
+    },
+       Pendingsection:{
+        marginTop: 3,
+        width:'35%',
+        paddingRight:100
     },
     sectionTitle: {
         fontSize: 15,
@@ -903,6 +985,17 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         maxHeight: 500, // Limit height to enable scrolling
     },
+      sessionsMainCardPending: {
+        width: '100%',
+   marginRight: -80, // Compensate for the overflow
+    //marginLeft: -40, // Negative margin to pull it back into view
+      //  paddingRight:30,
+       // marginHorizontal:20,
+        elevation: 0,
+        shadowColor: '#E4E0E1',
+        backgroundColor: '#fff',
+        maxHeight: 500, // Limit height to enable scrolling
+    },
     sessionsMainCardContent: {
         padding: 0,
         height: '100%',
@@ -1079,6 +1172,11 @@ const Webstyles = StyleSheet.create({
         width:'35%',
         paddingRight:100
     },
+    Pendingsection:{
+        marginTop: 3,
+        width:'55%',
+        paddingRight:100
+    },
     sectionTitle: {
         fontSize: 18,
         position:'relative',
@@ -1099,7 +1197,6 @@ const Webstyles = StyleSheet.create({
         flexDirection:'row',
         justifyContent:'space-between',
     //paddingRight: 10, // Reduce padding to give more space
-
         marginBottom:90,
     },
     toDoList: {
@@ -1295,6 +1392,17 @@ const Webstyles = StyleSheet.create({
         backgroundColor: '#fff',
         maxHeight: 500, // Limit height to enable scrolling
     },
+     sessionsMainCardPending: {
+        width: '120%',
+            marginRight: -100, // Compensate for the overflow
+    marginLeft: 10, // Negative margin to pull it back into view
+
+        marginHorizontal:20,
+        elevation: 0,
+        shadowColor: '#E4E0E1',
+        backgroundColor: '#fff',
+        maxHeight: 500, // Limit height to enable scrolling
+    },
     sessionsMainCardContent: {
         padding: 0,
         height: '100%',
@@ -1308,7 +1416,7 @@ const Webstyles = StyleSheet.create({
         alignItems: 'center',
     },
     sessionCard: {
-        width: '95%', // Full width instead of fixed 280px
+        width: '85%', // Full width instead of fixed 280px
         marginBottom: 20, // Space between cards vertically
        // backgroundColor: '#f8f9fa', // Changed from green to light gray
         borderRadius: 15,
