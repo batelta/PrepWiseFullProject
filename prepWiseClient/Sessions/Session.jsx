@@ -639,7 +639,11 @@ const toggleTaskCompletion = async (taskId) => {
         isCompleted: newStatus
       })
     });
-
+if (res.ok)
+{
+  setPopupMessage("Task completion updated successfully!");
+setSuccessPopupVisible(true);
+}
    if (!res.ok) {
   const errorText = await res.text(); // try parsing
   throw new Error(`Failed to update task completion: ${errorText}`);

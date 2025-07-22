@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, ScrollView, FlatList, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -19,6 +21,7 @@ export default function GlobalNotifications({ userEmail }) {
   
   const prevMeetingsRef = useRef(new Map());
   const prevTasksRef = useRef(new Map());
+  const prevRejectionsRef = useRef(new Map()); // ✅ הוספה עבור דחיות
   const isInitialLoadRef = useRef(true);
   const slideAnim = useRef(new Animated.Value(300)).current;
   const reminderIntervalRef = useRef(null);
@@ -46,32 +49,7 @@ export default function GlobalNotifications({ userEmail }) {
         clearInterval(reminderIntervalRef.current);
       }
     };
-  }, [userEmailLower]); // שינוי מ-userEmail ל-userEmailLower
-
-// פונקציה לשליפת נתוני מנטור מהשרת
-/*const fetchMentorData = async (mentorID) => {
-  try {
-    // אם כבר יש לנו את הנתונים - החזר מהמטמון
-    if (mentorsData.has(mentorID)) {
-      return mentorsData.get(mentorID);
-    }
-
-    // שלוף מהשרת
-    const response = await fetch(`${apiUrlStart}/api/Users?userId=${mentorID}`);
-    if (!response.ok) throw new Error('Failed to fetch mentor data');
-    
-    const mentorData = await response.json();
-    
-    // שמור במטמון
-    setMentorsData(prev => new Map(prev).set(mentorID, mentorData));
-    
-    return mentorData;
-  } catch (error) {
-    console.error('Error fetching mentor data:', error);
-    return { name: 'Unknown Mentor', email: '' };
-  }
-};
-*/
+  }, [userEmailLower]);
 
   const loadNotificationsFromStorage = async () => {
     try {
@@ -111,7 +89,7 @@ export default function GlobalNotifications({ userEmail }) {
     try {
       const q = query(
         collection(db, 'meetings'),
-        where('participants', 'array-contains', userEmailLower) // שימוש במייל באותיות קטנות
+        where('participants', 'array-contains', userEmailLower)
       );
 
       const querySnapshot = await new Promise((resolve, reject) => {
@@ -189,13 +167,88 @@ export default function GlobalNotifications({ userEmail }) {
     }, 60 * 60 * 1000);
   };
 
+  // ✅ Listen for rejected sessions - הוספה חדשה
+  useEffect(() => {
+    if (!userEmailLower) return;
+
+    const q = query(
+      collection(db, 'notifications'),
+      where('jobSeekerEmail', '==', userEmailLower),
+      where('status', '==', 'rejected')
+    );
+
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      const currentRejections = new Map();
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        currentRejections.set(doc.id, {
+          id: doc.id,
+          sessionID: data.sessionID,
+          mentorName: data.mentorName || data.mentorFirstName || 'Unknown Mentor',
+          mentorEmail: data.mentorEmail,
+          jobSeekerEmail: data.jobSeekerEmail,
+          status: data.status,
+          rejectedAt: data.rejectedAt || data.updatedAt,
+          sessionTitle: data.sessionTitle || data.title || 'Session Request'
+        });
+      });
+
+      // טוען דחיות שכבר נצפו מ-AsyncStorage
+      const viewedRejections = await AsyncStorage.getItem(`viewedRejections_${userEmailLower}`);
+      const viewedRejectionsSet = new Set(viewedRejections ? JSON.parse(viewedRejections) : []);
+
+      if (isInitialLoadRef.current) {
+        // במטען הראשון, שומר את כל הדחיות הקיימות כנצפות
+        const existingRejectionIds = Array.from(currentRejections.keys());
+        await AsyncStorage.setItem(`viewedRejections_${userEmailLower}`, JSON.stringify(existingRejectionIds));
+        prevRejectionsRef.current = currentRejections;
+        return;
+      }
+
+      const newNotifications = [];
+      const newViewedRejections = Array.from(viewedRejectionsSet);
+
+      for (const [docId, rejectionData] of currentRejections) {
+        if (!prevRejectionsRef.current.has(docId) && !viewedRejectionsSet.has(docId)) {
+          const newRejectionNotification = {
+            id: docId + '_rejection_' + Date.now(),
+            type: 'rejection',
+            rejection: rejectionData,
+            timestamp: new Date(),
+            read: false
+          };
+
+          newNotifications.push(newRejectionNotification);
+          newViewedRejections.push(docId);
+
+          setNotificationModal({
+            visible: true,
+            data: rejectionData,
+            type: 'rejection'
+          });
+        }
+      }
+
+      if (newNotifications.length > 0) {
+        setNotifications(prev => [...newNotifications, ...prev]);
+        setUnreadCount(prev => prev + newNotifications.length);
+        await AsyncStorage.setItem(`viewedRejections_${userEmailLower}`, JSON.stringify(newViewedRejections));
+      }
+
+      prevRejectionsRef.current = currentRejections;
+    });
+
+    return () => unsubscribe();
+  }, [userEmailLower]);
+
   // Listen for new meetings
   useEffect(() => {
     if (!userEmailLower) return;
 
     const q = query(
       collection(db, 'meetings'),
-      where('participants', 'array-contains', userEmailLower) // שימוש במייל באותיות קטנות
+      where('participants', 'array-contains', userEmailLower)
     );
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -221,7 +274,6 @@ export default function GlobalNotifications({ userEmail }) {
 
       const newNotifications = [];
       currentMeetings.forEach((meetingData, meetingId) => {
-        // השוואת המייל של היוצר באותיות קטנות
         if (!prevMeetingsRef.current.has(meetingId) && meetingData.createdBy !== userEmailLower) {
           const newMeetingNotification = {
             id: meetingId + '_new_meeting_' + Date.now(),
@@ -250,17 +302,15 @@ export default function GlobalNotifications({ userEmail }) {
     });
 
     return () => unsubscribe();
-  }, [userEmailLower]); // שינוי מ-userEmail ל-userEmailLower
+  }, [userEmailLower]);
 
-  // Listen for new tasks - עכשיו מסונן רק לגמישות העבודה ולא ישלח התראות למנטור
+  // Listen for new tasks
   useEffect(() => {
     if (!userEmailLower) return;
 
-    // רק מחפש עבודה יקבל התראות על משימות חדשות
     const q = query(
       collection(db, 'tasks'),
-      where('jobSeekerEmail', '==', userEmailLower) // שימוש במייל באותיות קטנות
-      // הסרנו את orderBy כדי למנוע את הצורך ב-index
+      where('jobSeekerEmail', '==', userEmailLower)
     );
 
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
@@ -270,22 +320,20 @@ export default function GlobalNotifications({ userEmail }) {
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         tasksArray.push({
-        id: doc.id,
-    taskID: data.taskID,
-    sessionID: data.sessionID,
-    createdAt: data.createdAt,
-    jobSeekerEmail: data.jobSeekerEmail,
-    // ✅ פרטי המשימה והמנטור
-    title: data.title,
-    description: data.description,
-    mentorID: data.mentorID,
-     mentorName: data.mentorName, 
-    mentorFirstName: data.mentorFirstName, 
-    mentorLastName: data.mentorLastName, 
-      });
+          id: doc.id,
+          taskID: data.taskID,
+          sessionID: data.sessionID,
+          createdAt: data.createdAt,
+          jobSeekerEmail: data.jobSeekerEmail,
+          title: data.title,
+          description: data.description,
+          mentorID: data.mentorID,
+          mentorName: data.mentorName, 
+          mentorFirstName: data.mentorFirstName, 
+          mentorLastName: data.mentorLastName, 
+        });
       });
 
-      // ממיין לפי createdAt בצד הלקוח
       tasksArray.sort((a, b) => {
         if (a.createdAt && b.createdAt) {
           return b.createdAt.toMillis() - a.createdAt.toMillis();
@@ -293,17 +341,14 @@ export default function GlobalNotifications({ userEmail }) {
         return 0;
       });
 
-      // ממיר למפה
       tasksArray.forEach(task => {
         currentTasks.set(task.id, task);
       });
 
-      // טוען משימות שכבר נצפו מ-AsyncStorage
       const viewedTasks = await AsyncStorage.getItem(`viewedTasks_${userEmailLower}`);
       const viewedTasksSet = new Set(viewedTasks ? JSON.parse(viewedTasks) : []);
 
       if (isInitialLoadRef.current) {
-        // במטען הראשון, שומר את כל המשימות הקיימות כנצפות
         const existingTaskIds = Array.from(currentTasks.keys());
         await AsyncStorage.setItem(`viewedTasks_${userEmailLower}`, JSON.stringify(existingTaskIds));
         prevTasksRef.current = currentTasks;
@@ -313,53 +358,44 @@ export default function GlobalNotifications({ userEmail }) {
       const newNotifications = [];
       const newViewedTasks = Array.from(viewedTasksSet);
 
-     for (const [docId, taskData] of currentTasks) {
-      if (!prevTasksRef.current.has(docId) && !viewedTasksSet.has(docId)) {
-        // שלוף נתוני המנטור
-        //const mentorData = await fetchMentorData(taskData.mentorID);
-        
-        // הוסף את נתוני המנטור למשימה
-        /*const taskWithMentor = {
-          ...taskData,
-          mentorName: mentorData.name || mentorData.firstName || 'Unknown',
-          mentorEmail: mentorData.email
-        };*/
+      for (const [docId, taskData] of currentTasks) {
+        if (!prevTasksRef.current.has(docId) && !viewedTasksSet.has(docId)) {
+          const newTaskNotification = {
+            id: docId + '_new_task_' + Date.now(),
+            type: 'task',
+            task: {
+              ...taskData,
+              mentorName: taskData.mentorName || 'Unknown Mentor'
+            },
+            timestamp: new Date(),
+            read: false
+          };
 
-        const newTaskNotification = {
-          id: docId + '_new_task_' + Date.now(),
-          type: 'task',
-          task: {...taskData,
-          mentorName: taskData.mentorName || 'Unknown Mentor'
-          }, // ✅ עם נתוני המנטור
-          timestamp: new Date(),
-          read: false
-        };
+          newNotifications.push(newTaskNotification);
+          newViewedTasks.push(docId);
 
-        newNotifications.push(newTaskNotification);
-        newViewedTasks.push(docId);
-
-        setNotificationModal({
-          visible: true,
-          data: {
-        ...taskData,
-        mentorName: taskData.mentorName || 'Unknown Mentor'
-      }, // ✅ עם נתוני המנטור
-          type: 'task'
-        });
+          setNotificationModal({
+            visible: true,
+            data: {
+              ...taskData,
+              mentorName: taskData.mentorName || 'Unknown Mentor'
+            },
+            type: 'task'
+          });
+        }
       }
-    }
 
       if (newNotifications.length > 0) {
-      setNotifications(prev => [...newNotifications, ...prev]);
-      setUnreadCount(prev => prev + newNotifications.length);
-      await AsyncStorage.setItem(`viewedTasks_${userEmailLower}`, JSON.stringify(newViewedTasks));
-    }
+        setNotifications(prev => [...newNotifications, ...prev]);
+        setUnreadCount(prev => prev + newNotifications.length);
+        await AsyncStorage.setItem(`viewedTasks_${userEmailLower}`, JSON.stringify(newViewedTasks));
+      }
 
-    prevTasksRef.current = currentTasks;
-  });
+      prevTasksRef.current = currentTasks;
+    });
 
-  return () => unsubscribe();
-}, [userEmailLower]);
+    return () => unsubscribe();
+  }, [userEmailLower]);
 
   const openNotifications = () => {
     setModalVisible(true);
@@ -401,7 +437,6 @@ export default function GlobalNotifications({ userEmail }) {
     try {
       await AsyncStorage.removeItem(`notifications_${userEmailLower}`);
       await AsyncStorage.removeItem(`reminders_${userEmailLower}`);
-      // לא מוחק את viewedTasks כי זה חשוב לזכור אילו משימות כבר נצפו
     } catch (error) {
       console.error('Error clearing notifications from storage:', error);
     }
@@ -424,6 +459,8 @@ export default function GlobalNotifications({ userEmail }) {
         return 'Meeting Reminder';
       case 'task':
         return 'New Task';
+      case 'rejection': // ✅ הוספה חדשה
+        return 'Request Rejected';
       default:
         return 'Notification';
     }
@@ -437,8 +474,8 @@ export default function GlobalNotifications({ userEmail }) {
         return 'schedule';
       case 'task':
         return 'assignment';
-      /*default:
-        return 'notifications';*/
+      case 'rejection': // ✅ הוספה חדשה
+        return 'cancel';
     }
   };
 
@@ -450,8 +487,8 @@ export default function GlobalNotifications({ userEmail }) {
         return '#9FF9D5';
       case 'task':
         return '#2196F3';
-      /*default:
-        return '#9C27B0';*/
+      case 'rejection': // ✅ הוספה חדשה
+        return '#FF6B6B';
     }
   };
 
@@ -463,8 +500,8 @@ export default function GlobalNotifications({ userEmail }) {
         return '⏰ Meeting Reminder';
       case 'task':
         return '📋 New Task';
-      /*default:
-        return '📢 Notification';*/
+      case 'rejection': // ✅ הוספה חדשה
+        return '❌ Request Rejected';
     }
   };
 
@@ -476,55 +513,65 @@ export default function GlobalNotifications({ userEmail }) {
         return 'Your meeting is tomorrow:';
       case 'task':
         return 'A new task has been created:';
-      /*default:
-        return 'Details:';*/
+      case 'rejection': // ✅ הוספה חדשה
+        return 'Your session request has been rejected:';
     }
   };
 
   const renderNotificationItem = ({ item }) => (
-  <View style={[styles.notificationItem, !item.read && styles.unreadNotification]}>
-    <View style={styles.notificationHeader}>
-      <Icon 
-        name={getNotificationIcon(item.type)} 
-        size={20} 
-        color={getNotificationColor(item.type)} 
-      />
-      <Text style={styles.notificationTitle}>{getNotificationTitle(item.type)}</Text>
-      <Text style={styles.notificationTime}>
-        {item.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-      </Text>
-    </View>
-    
-    {item.type === 'task' ? (
-      <View>
-        <Text style={styles.taskTitle}>📋 {item.task.title}</Text>
-        <Text style={styles.taskDetails}>
-          👤 Added by: {item.task.mentorName}
+    <View style={[styles.notificationItem, !item.read && styles.unreadNotification]}>
+      <View style={styles.notificationHeader}>
+        <Icon 
+          name={getNotificationIcon(item.type)} 
+          size={20} 
+          color={getNotificationColor(item.type)} 
+        />
+        <Text style={styles.notificationTitle}>{getNotificationTitle(item.type)}</Text>
+        <Text style={styles.notificationTime}>
+          {item.timestamp.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
         </Text>
-        {item.task.description && (
-          <Text style={styles.taskDetails}>📝 {item.task.description}</Text>
-        )}
       </View>
-    ) : (
-      <View>
-        <Text style={styles.meetingTitle}>📌 {item.meeting.title}</Text>
-        <Text style={styles.meetingDetails}>
-          📅 {formatDateTime(item.meeting.datetime)}
-        </Text>
-        <Text style={styles.meetingDetails}>
-          ⏱️ Duration: {item.meeting.duration} minutes
-        </Text>
-        {item.type === 'reminder' && (
-          <Text style={styles.reminderText}>
-            ⏰ Meeting is tomorrow!
+      
+      {item.type === 'task' ? (
+        <View>
+          <Text style={styles.taskTitle}>📋 {item.task.title}</Text>
+          <Text style={styles.taskDetails}>
+            👤 Added by: {item.task.mentorName}
           </Text>
-        )}
-      </View>
-    )}
-    
-    {!item.read && <View style={styles.unreadDot} />}
-  </View>
-);
+          {item.task.description && (
+            <Text style={styles.taskDetails}>📝 {item.task.description}</Text>
+          )}
+        </View>
+      ) : item.type === 'rejection' ? ( // ✅ הוספה חדשה
+        <View>
+          <Text style={styles.rejectionTitle}>❌ {item.rejection.sessionTitle}</Text>
+          <Text style={styles.rejectionDetails}>
+            👤 Rejected by: {item.rejection.mentorName}
+          </Text>
+          <Text style={styles.rejectionMessage}>
+            Your session request has been declined
+          </Text>
+        </View>
+      ) : (
+        <View>
+          <Text style={styles.meetingTitle}>📌 {item.meeting.title}</Text>
+          <Text style={styles.meetingDetails}>
+            📅 {formatDateTime(item.meeting.datetime)}
+          </Text>
+          <Text style={styles.meetingDetails}>
+            ⏱️ Duration: {item.meeting.duration} minutes
+          </Text>
+          {item.type === 'reminder' && (
+            <Text style={styles.reminderText}>
+              ⏰ Meeting is tomorrow!
+            </Text>
+          )}
+        </View>
+      )}
+      
+      {!item.read && <View style={styles.unreadDot} />}
+    </View>
+  );
 
   const NotificationModal = () => {
     if (!notificationModal.data) return null;
@@ -553,7 +600,14 @@ export default function GlobalNotifications({ userEmail }) {
                   <Text style={styles.taskTitleModal}>📋 {notificationModal.data.title}</Text>
                   <Text style={styles.taskSessionModal}>👤 Added by: {notificationModal.data.mentorName}</Text>
                 </View>
-                
+              ) : notificationModal.type === 'rejection' ? ( // ✅ הוספה חדשה
+                <View>
+                  <Text style={styles.rejectionTitleModal}>❌ {notificationModal.data.sessionTitle}</Text>
+                  <Text style={styles.rejectionMentorModal}>👤 Rejected by: {notificationModal.data.mentorName}</Text>
+                  <Text style={styles.rejectionMessageModal}>
+                    Unfortunately, your session request has been declined. You can try requesting another session with a different mentor.
+                  </Text>
+                </View>
               ) : (
                 <View>
                   <Text style={styles.meetingTitleModal}>📌 {notificationModal.data.title}</Text>
@@ -647,7 +701,6 @@ export default function GlobalNotifications({ userEmail }) {
     </>
   );
 }
-
 const styles = StyleSheet.create({
   floatingButton: {
     position: 'absolute',

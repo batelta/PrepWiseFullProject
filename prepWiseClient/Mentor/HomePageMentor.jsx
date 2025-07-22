@@ -15,7 +15,8 @@ import { UserContext } from '../UserContext';
 import { useNavigation } from '@react-navigation/native';
 import {apiUrlStart} from '../api';
 import MentorOffersCarousel from "./MentorOffersCarousel";
-
+import { collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebaseConfig'
 
 
 
@@ -27,8 +28,8 @@ export default function HomePageMentor() {
     const [user, setUser] = useState(null);
     const [profileImage, setProfileImage] = useState(null);
     const [firstname, setFirstname] = useState("Guest");
-    
-    // state עבור סשנים קרובים וjourney 
+    const [lastname,setLastName]=useState("");
+        // state עבור סשנים קרובים וjourney 
     const [matches, setMatches] = useState([]);
     const [loadingMatches, setLoadingMatches] = useState(true);
     const [upcomingSessions, setUpcomingSessions] = useState([]);
@@ -40,6 +41,9 @@ export default function HomePageMentor() {
 //for pending
 const [pendingSessions, setPendingSessions] = useState([]);
 const [loadingPendingSessions, setLoadingPendingSessions] = useState(false);
+
+//notification
+const [jobSeekeremail,setJobSeekerEmail]=useState("");
 
    useEffect(() => {
     if (Loggeduser) {
@@ -214,6 +218,7 @@ const formatSessionDateTime = (dateTime) => {
               else
           setProfileImage({ uri: userData.picture })        
         setFirstname(userData.firstName)
+        setLastName(userData.lastName)
            }
       
       if(!response.ok){
@@ -224,6 +229,28 @@ const formatSessionDateTime = (dateTime) => {
         }
     }     
     
+
+    //FOR THE NOTIFICATION ,JOB SEEKER EMAIL
+  
+      const fetchUserDetails = async (userID) => {
+        try {
+    
+          // קריאה ל-API לפי ID כדי לקבל את כל הנתונים (כולל תחומים ושפות)
+          const response = await fetch(`${apiUrlStart}/api/Users?userId=${userID}`);
+          if (!response.ok) {
+            console.error("Failed to fetch full user data from API.");
+            return;
+          }
+    
+          const fullUserData = await response.json();
+          console.log("Full user data from API:", fullUserData);
+              console.log(fullUserData.email)
+    return fullUserData.email;
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      };
+    //
     const [fontsLoaded] = useFonts({
         Inter_400Regular,
         Inter_700Bold,
@@ -274,17 +301,54 @@ const handleApprove = async (sessionID,jobSeekerID,journeyID,mentorID,firstName,
   }
 };
 
-const handleReject = async (sessionID) => {
-  try {
+const handleReject = async (sessionID,jobSeekerID) => {
+     try {
+const email = await fetchUserDetails(jobSeekerID);
+if (!email) return;
     const response = await fetch(`${apiUrlStart}/api/session/reject/${sessionID}`, {
       method: 'POST',
     });
-
+    
     if (response.ok) {
       const result = await response.json();
       if (result === true) {
         console.log('Session rejected successfully.');
-        // Optional: update state or UI to reflect the rejection
+      fetchPendingSessions(Loggeduser.id);
+        // מציאת הדוקומנט לפי sessionID
+        const q = query(
+          collection(db, 'notifications'),
+          where('sessionID', '==', sessionID)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+          // אם קיים דוקומנט - עדכן אותו
+          const docRef = querySnapshot.docs[0].ref;
+          await updateDoc(docRef, {
+            status: 'rejected',
+            rejectedAt: serverTimestamp(),
+            mentorName: `${firstname} ${lastname}`,
+            mentorEmail: Loggeduser.email,
+            jobSeekerEmail: email.toLowerCase(),
+            sessionTitle:'Session Request',
+            updatedAt: serverTimestamp()
+          });
+          console.log('Existing session rejection notification updated in Firestore');
+        } else {
+          // אם לא קיים דוקומנט - צור חדש
+          await addDoc(collection(db, 'notifications'), {
+            sessionID: sessionID,
+            status: 'rejected',
+            rejectedAt: serverTimestamp(),
+           mentorName: `${firstname} ${lastname}`,
+            mentorEmail: Loggeduser.email,
+            jobSeekerEmail: email.toLowerCase(),
+            sessionTitle: 'Session Request',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          console.log('New session rejection notification created in Firestore');
+        }
       } else {
         console.warn('Rejection failed on server.');
       }
@@ -295,8 +359,6 @@ const handleReject = async (sessionID) => {
     console.error('Error rejecting session:', error);
   }
 };
-
-
     // פונקציה להצגת רשימת ההתאמות
     const renderMatches = () => {
         if (loadingMatches) {
@@ -555,7 +617,8 @@ return (
                                     <Button
                                         icon="close"
                                         mode="contained"
-                                        onPress={() => handleReject(session.sessionID)}
+                                        onPress={() => 
+                                            handleReject(session.sessionID,session.jobSeekerID)}
                                         style={{ backgroundColor: 'red' }}
                                     >
                                         Reject

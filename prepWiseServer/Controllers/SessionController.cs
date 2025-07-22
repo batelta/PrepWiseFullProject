@@ -287,7 +287,8 @@ namespace prepWise.Controllers
         }
 
         [HttpPost("feedback")]
-        public IActionResult AddOrUpdateSessionFeedback(int sessionId, int submittedBy, double rating, string comment)
+        public IActionResult AddOrUpdateSessionFeedback(int sessionId, int submittedBy, double rating,
+               [FromQuery] string? comment = null) // ✅ allow null properly
         {
             try
             {
