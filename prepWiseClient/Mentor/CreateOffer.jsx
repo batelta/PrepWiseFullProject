@@ -2,16 +2,32 @@ import React, { useContext } from "react";
 import { SafeAreaView, ScrollView, View, Alert } from "react-native";
 import NavBarMentor from "./NavBarMentor";
 import { UserContext } from "../UserContext";
-import MentorOfferForm from "../Mentor/MentorOfferForm"; 
-import {apiUrlStart} from '../api';
+import MentorOfferForm from "../Mentor/MentorOfferForm";
+import { apiUrlStart } from "../api";
 
 export default function CreateOffer({ navigation }) {
   const { Loggeduser } = useContext(UserContext);
+  //const apiUrlStart = "https://localhost:7137";
 
   const handleCreateOffer = async (offerData) => {
+    const localDateTime =
+      offerData.dateTime &&
+      `${offerData.dateTime.getFullYear()}-${String(
+        offerData.dateTime.getMonth() + 1
+      ).padStart(2, "0")}-${String(offerData.dateTime.getDate()).padStart(
+        2,
+        "0"
+      )}T${String(offerData.dateTime.getHours()).padStart(2, "0")}:${String(
+        offerData.dateTime.getMinutes()
+      ).padStart(2, "0")}:00`;
+
+    // דוגמה מה יצא: "2025-07-23T10:00:00" (בלי Z)
+    console.log("Local ISO for server:", localDateTime);
+
     const body = {
       ...offerData,
       MentorUserID: Loggeduser.id,
+      dateTime: localDateTime ?? null,
     };
 
     try {

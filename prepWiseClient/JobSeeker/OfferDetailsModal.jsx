@@ -29,28 +29,6 @@ export default function OfferDetailsModal({
       ? require("../assets/defaultProfileImage.jpg")
       : { uri: mentor?.picture };
 
-  /*const handleRegister = () => {
-    onRegister();
-    setPopupConfig({
-      icon: "check-circle",
-      message: "You have successfully registered for the event.",
-      isConfirmation: false,
-    });
-    setShowPopup(true);
-  };
-
-  const handleUnregister = () => {
-    setPopupConfig({
-      icon: "alert-circle",
-      message: "Are you sure you want to cancel your registration?",
-      isConfirmation: true,
-      onConfirm: () => {
-        onUnregister();
-        setShowPopup(false);
-      },
-    });
-    setShowPopup(true);
-  };*/
 
   return (
     <Modal

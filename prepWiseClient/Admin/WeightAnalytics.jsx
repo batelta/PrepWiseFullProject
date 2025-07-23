@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, StyleSheet, ScrollView, Image, Platform } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -17,7 +17,11 @@ import {
   ActivityIndicator,
   Text,
 } from "react-native-paper";
-import {apiUrlStart} from '../api';
+import Carousel from "react-native-reanimated-carousel";
+import Icon from "react-native-vector-icons/FontAwesome"; // ייבוא האייקונים
+
+//const apiUrlStart = "https://localhost:7137";
+import { apiUrlStart } from "../api";
 
 const API_URL = `${apiUrlStart}/api/MentorMatching/export-feature-data`;
 
@@ -35,38 +39,13 @@ const WeightAnalytics = () => {
   const [isVersionImported, setIsVersionImported] = useState(false);
   const [activeVersion, setActiveVersion] = useState(null);
 
+  const carouselRef = useRef(null);
+
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_700Bold,
     Inter_300Light,
   });
-
-  /*useEffect(() => {
-    const fetchVersionsAndGraphs = async () => {
-      try {
-        const res = await fetch(
-          `${apiUrlStart}/api/MentorMatching/get-all-versions`
-        );
-        const data = await res.json();
-        console.log("📢 versions data:", data);
-
-        if (data.versions && data.versions.length > 0) {
-          const versions = data.versions;
-          const latest = versions[0];
-
-          setAvailableVersions(versions);
-          setLatestVersion(latest);
-          setSelectedVersion(latest);
-
-          await fetchGraphsForVersion(latest);
-        }
-      } catch (err) {
-        console.error("❌ Failed to load versions", err);
-      }
-    };
-
-    fetchVersionsAndGraphs();
-  }, []);*/
 
   const fetchVersionsAndGraphs = async () => {
     try {
@@ -132,6 +111,18 @@ const WeightAnalytics = () => {
       console.error("Error refreshing active version:", error);
     }
   };*/
+
+  const refreshActiveVersion = async () => {
+    try {
+      const resActive = await fetch(
+        `${apiUrlStart}/api/MentorMatching/get-active-version`
+      );
+      const dataActive = await resActive.json();
+      setActiveVersion(dataActive.activeVersion);
+    } catch (error) {
+      console.error("Error refreshing active version:", error);
+    }
+  };
 
   const refreshIsVersionImported = async (version) => {
     const res = await fetch(
@@ -256,6 +247,18 @@ const WeightAnalytics = () => {
 
   if (!fontsLoaded) return null;
 
+  const handleNext = () => {
+    if (carouselRef.current) {
+      carouselRef.current.next(); // מעבר לגרף הבא
+    }
+  };
+
+  const handlePrevious = () => {
+    if (carouselRef.current) {
+      carouselRef.current.prev(); // חזרה לגרף הקודם
+    }
+  };
+
   return isLoading ? (
     <View style={[styles.container, styles.loadingContainer]}>
       <NavBar />
@@ -281,7 +284,7 @@ const WeightAnalytics = () => {
             style={styles.button}
             onPress={handleDownload}
           >
-            📥 Get Current Weights Version
+            📥 Get Current Features Table
           </Button>
 
           <Button
@@ -296,7 +299,6 @@ const WeightAnalytics = () => {
         {/* Right panel */}
         <ScrollView contentContainerStyle={styles.rightPanel}>
           <Title style={styles.title}>Weight Analytics</Title>
-
           {availableVersions.length === 0 ? (
             <Paragraph style={{ marginTop: 20, fontSize: 16 }}>
               No versions available yet. Please create a new weights version
@@ -324,7 +326,6 @@ const WeightAnalytics = () => {
               </Picker>
             </View>
           )}
-
           {/* Summary & Recommendations */}
           {(summary || weights.length > 0) && (
             <View style={styles.summarySection}>
@@ -354,8 +355,7 @@ const WeightAnalytics = () => {
             </View>
           )}
 
-          {/* Graphs Section */}
-          {graphList.length > 0 && (
+          {/* {graphList.length > 0 && (
             <View style={styles.graphsSection}>
               <Title style={styles.sectionTitle}>Graphs</Title>
               {graphList.map((img, i) => (
@@ -366,9 +366,54 @@ const WeightAnalytics = () => {
                   resizeMode="contain"
                 />
               ))}
+            </View>)}*/}
+          {/* Graphs Section */}
+          {/* Graphs Section */}
+          {graphList.length > 0 && (
+            <View style={styles.graphsSection}>
+              <Title style={styles.sectionTitle}>Graphs</Title>
+
+              {/* Container עם החצים מחוץ לקרוסלה - לחלוטין מופרדים */}
+              <View style={styles.carouselWrapper}>
+                {/* חץ שמאלי - רכיב נפרד */}
+                <View style={styles.arrowContainer}>
+                  <Button
+                    onPress={handlePrevious}
+                    style={styles.arrowButtonLeft}
+                  >
+                    <Text style={styles.arrowText}>‹</Text>
+                  </Button>
+                </View>
+
+                {/* הקרוסלה - רכיב נפרד לחלוטין */}
+                <View style={styles.carouselContainer}>
+                  <Carousel
+                    ref={carouselRef}
+                    data={graphList}
+                    renderItem={({ item, index }) => (
+                      <View key={index} style={styles.graphContainer}>
+                        <Image
+                          source={{ uri: `data:image/png;base64,${item}` }}
+                          style={styles.graphImage}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    )}
+                    width={680} // הגדלה משמעותית יותר
+                    height={550} // הגדלה משמעותית יותר
+                    loop={false}
+                  />
+                </View>
+
+                {/* חץ ימני - רכיב נפרד */}
+                <View style={styles.arrowContainer}>
+                  <Button onPress={handleNext} style={styles.arrowButtonRight}>
+                    <Text style={styles.arrowText}>›</Text>
+                  </Button>
+                </View>
+              </View>
             </View>
           )}
-
           {/* CSV download */}
           {Platform.OS === "web" && csvBase64 && (
             <Button
@@ -384,7 +429,6 @@ const WeightAnalytics = () => {
               ⬇️ Download New Recommendations Table
             </Button>
           )}
-
           {/*  {isVersionImported ? (
             <Button
               mode="contained"
@@ -443,6 +487,9 @@ const WeightAnalytics = () => {
                   { method: "POST" }
                 );
 
+                // עדכון מיידי של הגרסה האקטיבית
+                await refreshActiveVersion();
+
                 alert(`Version ${selectedVersion} set as active ✅`);
               }}
             >
@@ -457,6 +504,10 @@ const WeightAnalytics = () => {
                   `${apiUrlStart}/api/MentorMatching/import-weights/${selectedVersion}`,
                   { method: "POST" }
                 );
+
+                // עדכון מיידי של הסטייט
+                await refreshIsVersionImported(selectedVersion);
+                await refreshActiveVersion();
 
                 alert(
                   `Weights from version ${selectedVersion} imported and set as active ✅`
@@ -570,15 +621,80 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
+  sectionTitle: {
+    fontSize: 20,
+    marginBottom: 15,
+    color: "#163349",
+  },
+
   graphsSection: {
     marginTop: 30,
     width: "100%",
     alignItems: "center",
   },
 
-  sectionTitle: {
-    fontSize: 20,
-    marginBottom: 15,
-    color: "#163349",
+  carouselWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+
+  arrowContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    width: 50, // רוחב קבוע
+  },
+
+  carouselContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 10, // מרווח של 15 פיקסל מכל צד
+  },
+
+  graphContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 10,
+  },
+
+  graphImage: {
+    width: 600, // הגדלה משמעותית יותר
+    height: 500, // הגדלה משמעותית יותר
+  },
+
+  arrowButtonLeft: {
+    backgroundColor: "rgba(142, 68, 173, 0.1)",
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+
+  arrowButtonRight: {
+    backgroundColor: "rgba(142, 68, 173, 0.1)",
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+
+  arrowText: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#8e44ad",
   },
 });

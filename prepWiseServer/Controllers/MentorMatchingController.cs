@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using prepWise.BL;
 using prepWise.DAL;
 using System.Collections.Generic;
@@ -25,24 +24,37 @@ namespace prepWise.Controllers
 
 
         // POST api/<MentorMatchingController>
-/*  
-       [HttpGet("FindMentor")]
-        public ActionResult<List<Mentor>> FindMentor(
-      int userID,
-    string gender,
-    bool mentorRole,
-    string guidanceType,
-    [FromQuery] List<string> mentorLanguages,
-    [FromQuery] List<string> mentorCompanies,
-    bool isLanguageImportant,
-    bool isCompanyImportant,
-    bool isGenderImportant)
+
+
+
+        [HttpPost("FindMentor")]
+        public ActionResult<List<Mentor>> FindMentor([FromBody] JsonElement request)
         {
             try
             {
-                UsersDB db = new UsersDB();
+                int userID = request.GetProperty("userID").GetInt32();
+                string gender = request.GetProperty("gender").GetString();
+                bool mentorRole = request.GetProperty("mentorRole").GetBoolean();
+                string guidanceType = request.GetProperty("guidanceType").GetString();
 
-                var userTraits = db.GetTraitsByUserId(userID); // שואב מהדאטה בייס את השאלון
+                // Languages array
+                var mentorLanguages = request.GetProperty("preferredLanguages")
+                    .EnumerateArray()
+                    .Select(l => l.GetString())
+                    .ToList();
+
+                // Companies array
+                var mentorCompanies = request.GetProperty("preferredCompanies")
+                    .EnumerateArray()
+                    .Select(c => c.GetString())
+                    .ToList();
+
+                bool isLanguageImportant = request.GetProperty("isLanguageImportant").GetBoolean();
+                bool isCompanyImportant = request.GetProperty("isCompanyImportant").GetBoolean();
+                bool isGenderImportant = request.GetProperty("isGenderImportant").GetBoolean();
+
+                UsersDB db = new UsersDB();
+                var userTraits = db.GetTraitsByUserId(userID);
 
                 var matchedMentors = db.FindBestMentor(
                     userID,
@@ -51,7 +63,7 @@ namespace prepWise.Controllers
                     mentorLanguages,
                     guidanceType,
                     userTraits,
-                    mentorCompanies,    
+                    mentorCompanies,
                     isLanguageImportant,
                     isCompanyImportant,
                     isGenderImportant
@@ -67,61 +79,8 @@ namespace prepWise.Controllers
                 return StatusCode(500, "Error while matching: " + ex.Message);
             }
         }
-*/
 
-[HttpPost("FindMentor")]
-    public ActionResult<List<Mentor>> FindMentor([FromBody] JsonElement request)
-    {
-        try
-        {
-            int userID = request.GetProperty("userID").GetInt32();
-            string gender = request.GetProperty("gender").GetString();
-            bool mentorRole = request.GetProperty("mentorRole").GetBoolean();
-            string guidanceType = request.GetProperty("guidanceType").GetString();
 
-            // Languages array
-            var mentorLanguages = request.GetProperty("preferredLanguages")
-                .EnumerateArray()
-                .Select(l => l.GetString())
-                .ToList();
-
-            // Companies array
-            var mentorCompanies = request.GetProperty("preferredCompanies")
-                .EnumerateArray()
-                .Select(c => c.GetString())
-                .ToList();
-
-            bool isLanguageImportant = request.GetProperty("isLanguageImportant").GetBoolean();
-            bool isCompanyImportant = request.GetProperty("isCompanyImportant").GetBoolean();
-            bool isGenderImportant = request.GetProperty("isGenderImportant").GetBoolean();
-
-            UsersDB db = new UsersDB();
-            var userTraits = db.GetTraitsByUserId(userID);
-
-            var matchedMentors = db.FindBestMentor(
-                userID,
-                gender,
-                mentorRole,
-                mentorLanguages,
-                guidanceType,
-                userTraits,
-                mentorCompanies,
-                isLanguageImportant,
-                isCompanyImportant,
-                isGenderImportant
-            );
-
-            if (matchedMentors == null || matchedMentors.Count == 0)
-                return NotFound("No suitable mentor found.");
-
-                    return Ok(matchedMentors);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, "Error while matching: " + ex.Message);
-        }
-    }
-        
         [HttpGet("export-feature-data")]
         public IActionResult ExportFeatureData()
         {
@@ -129,7 +88,7 @@ namespace prepWise.Controllers
             {
                 var user = new User();
 
-                // צור קובץ זמני (לא נשמר ב-wwwroot)
+                // צור קובץ זמני (לא נשמר ב
                 string tempFile = Path.GetTempFileName();
                 user.ExportFeatureDataToCsv(tempFile);
 
@@ -150,36 +109,29 @@ namespace prepWise.Controllers
                 return StatusCode(500, $"Error generating file: {ex.Message}");
             }
         }
-        /*
-        [HttpGet("export-feature-data")]
-        public IActionResult ExportFeatureData()
-        {
-            try
-            {
-                var user = new User();
 
-                // צור קובץ זמני (לא נשמר ב-wwwroot)
-                string tempFile = Path.GetTempFileName();
-                user.ExportFeatureDataToCsv(tempFile);
+        /* [HttpGet("export-feature-data")]
+         public IActionResult ExportFeatureData()
+         {
+             try
+             {
+                 // לשימוש בדמו – נשתמש בקובץ שמור מראש במקום לייצא מה-DB
+                 string mockPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "MockData", "Synthetic_Full_Matching_Data.csv");
 
-                // קרא את תוכן הקובץ
-                byte[] fileBytes = System.IO.File.ReadAllBytes(tempFile);
+                 if (!System.IO.File.Exists(mockPath))
+                 {
+                     return NotFound("Mock feature data file not found.");
+                 }
 
-                // מחק אותו מיד אחרי
-                System.IO.File.Delete(tempFile);
+                 byte[] fileBytes = System.IO.File.ReadAllBytes(mockPath);
+                 return File(fileBytes, "text/csv", "features.csv");
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, $"Error returning mock file: {ex.Message}");
+             }
+         }*/
 
-                // בנה שם קובץ
-                string fileName = $"FeatureData_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
-
-                // החזר את הקובץ כקובץ להורדה
-                return File(fileBytes, "text/csv", fileName);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error generating file: {ex.Message}");
-            }
-        }
-        */
 
 
         [HttpGet("UserMatches/{userId}")]
@@ -202,47 +154,22 @@ namespace prepWise.Controllers
             }
         }
 
-        /*  [HttpGet("get-graphs/{version}")]
-       public async Task<IActionResult> GetGraphs(int version)
-       {
-           var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "Graphs", $"weights_v{version}.json");
-
-           if (!System.IO.File.Exists(path))
-           {
-               Console.WriteLine($"⚠️ No graphs found for version {version}");
-               return NotFound(new { error = "No saved graphs for this version." });
-           }
-
-           var json = await System.IO.File.ReadAllTextAsync(path);
-           var result = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-
-           Console.WriteLine($"Returning graphs for version {version}");
-
-           return Ok(new
-           {
-               version = version,
-               graphList = result.GetValueOrDefault("graphList"),
-               summary = result.GetValueOrDefault("summary"),
-               weights = result.GetValueOrDefault("weights"),
-               csv_base64 = result.GetValueOrDefault("csv_base64")
-           });
-       }*/
 
         [HttpGet("get-graphs/{version}")]
         public async Task<IActionResult> GetGraphs(int version)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "Graphs", $"v{version}", "weights.json");
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles", "Analytics", "Graphs", $"v{version}", "weights.json");
 
             if (!System.IO.File.Exists(path))
             {
-                Console.WriteLine($"⚠️ No graphs found for version {version}");
+                Console.WriteLine($" No graphs found for version {version}");
                 return NotFound(new { error = "No saved graphs for this version." });
             }
 
             var json = await System.IO.File.ReadAllTextAsync(path);
             var result = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
 
-            Console.WriteLine($"✅ Returning graphs for version {version}");
+            Console.WriteLine($" Returning graphs for version {version}");
 
             return Ok(new
             {
@@ -255,7 +182,7 @@ namespace prepWise.Controllers
         }
 
 
-
+        //to show in Admin section the latest version when first render the page
         [HttpGet("get-latest-version")]
         public ActionResult GetLatestVersion()
         {
@@ -284,7 +211,7 @@ namespace prepWise.Controllers
         {
             try
             {
-                var graphFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "Graphs");
+                var graphFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles", "Analytics", "Graphs");
 
                 if (!Directory.Exists(graphFolder))
                     return Ok(new List<int>());  // אין תיקיה => אין גרסאות
@@ -304,7 +231,7 @@ namespace prepWise.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error getting all versions: {ex.Message}");
+                Console.WriteLine($" Error getting all versions: {ex.Message}");
                 return StatusCode(500, "Error getting all versions");
             }
         }
@@ -313,11 +240,11 @@ namespace prepWise.Controllers
         [HttpPost("run-analysis")]
         public async Task<IActionResult> RunAnalysis([FromForm] IFormFile file)
         {
-            Console.WriteLine("🔥 RunAnalysis called");
+            Console.WriteLine(" RunAnalysis called");
 
             if (file == null || file.Length == 0)
             {
-                Console.WriteLine("⚠️ No file uploaded");
+                Console.WriteLine(" No file uploaded");
                 return BadRequest("No file uploaded.");
             }
 
@@ -328,7 +255,7 @@ namespace prepWise.Controllers
                 await file.CopyToAsync(stream);
             }
 
-            Console.WriteLine($"✅ File saved to {tempPath}");
+            Console.WriteLine($" File saved to {tempPath}");
 
             // 2️⃣ הכנה להרצת פייתון
             var scriptPath = Path.Combine(Directory.GetCurrentDirectory(), "MatchingAnalysis", "run_analysis.py");
@@ -350,9 +277,9 @@ namespace prepWise.Controllers
 
                 process.WaitForExit();
 
-                Console.WriteLine("🐍 Python output: " + output);
-                Console.WriteLine("🐍 Python error: " + error);
-                Console.WriteLine($"🐍 Python exit code: {process.ExitCode}");
+                Console.WriteLine(" Python output: " + output);
+                Console.WriteLine(" Python error: " + error);
+                Console.WriteLine($" Python exit code: {process.ExitCode}");
 
                 if (process.ExitCode != 0)
                 {
@@ -360,17 +287,17 @@ namespace prepWise.Controllers
                 }
 
                 // 3️⃣ שמירת גרסה חדשה
-                Console.WriteLine($"🚀 Inserting new version to DB");
+                Console.WriteLine($" Inserting new version to DB");
                 var user = new User();
                 int newVersionID = user.InsertNewVersion();
-                Console.WriteLine($"✅ InsertNewVersion done. New version: {newVersionID}");
+                Console.WriteLine($" InsertNewVersion done. New version: {newVersionID}");
 
                 // 4️⃣ עיבוד התוצאה
                 var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(output);
                 dict["version"] = newVersionID;
 
                 // 5️⃣ שמירת לקבצים
-                var versionFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "Graphs", $"v{newVersionID}");
+                var versionFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles", "Analytics", "Graphs", $"v{newVersionID}");
                 Directory.CreateDirectory(versionFolder);
 
                 var jsonPath = Path.Combine(versionFolder, "weights.json");
@@ -378,7 +305,7 @@ namespace prepWise.Controllers
 
                 // Save JSON
                 await System.IO.File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
-                Console.WriteLine($"✅ Output JSON saved to {jsonPath}");
+                Console.WriteLine($" Output JSON saved to {jsonPath}");
 
                 // Save CSV
                 var weights = ((JsonElement)dict["weights"]).EnumerateArray();
@@ -395,7 +322,7 @@ namespace prepWise.Controllers
                 }
 
                 await System.IO.File.WriteAllLinesAsync(csvPath, csvLines);
-                Console.WriteLine($"✅ Output CSV saved to {csvPath}");
+                Console.WriteLine($" Output CSV saved to {csvPath}");
 
                 // 6️⃣ מחזירים ללקוח
                 return Ok(dict);
@@ -421,6 +348,7 @@ namespace prepWise.Controllers
             }
         }
 
+        //import weights to DB and mark version as acvtive one
         [HttpPost("import-weights/{version}")]
         public IActionResult ImportWeights(int version)
         {
@@ -436,7 +364,7 @@ namespace prepWise.Controllers
                 }
 
                 // הנתיב של הקובץ
-                string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads", "Graphs", $"v{version}", "weights.csv");
+                string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles", "Analytics", "Graphs", $"v{version}", "weights.csv");
 
                 if (!System.IO.File.Exists(csvPath))
                 {
@@ -461,7 +389,7 @@ namespace prepWise.Controllers
                         }
                         else
                         {
-                            Console.WriteLine($"⚠️ Could not parse weight for param '{paramName}' in version {version}");
+                            Console.WriteLine($" Could not parse weight for param '{paramName}' in version {version}");
                         }
                     }
                 }
@@ -469,17 +397,18 @@ namespace prepWise.Controllers
                 // לסמן את הגרסה כאקטיבית
                 db.SetActiveVersion(version);
 
-                Console.WriteLine($"✅ Weights imported for version {version}");
+                Console.WriteLine($" Weights imported for version {version}");
                 return Ok(new { message = $"Weights imported for version {version}" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error importing weights: {ex.Message}");
+                Console.WriteLine($" Error importing weights: {ex.Message}");
                 return StatusCode(500, $"Error importing weights: {ex.Message}");
             }
         }
 
 
+        //return true/false if this version Weights alredy in the DB
         [HttpGet("is-version-imported/{version}")]
         public IActionResult IsVersionImported(int version)
         {
@@ -511,9 +440,10 @@ namespace prepWise.Controllers
             }
         }
 
+
         // PUT api/<MentorMatchingController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        public void Put(int id, [FromBody] string value)
         {
         }
 
@@ -522,5 +452,9 @@ namespace prepWise.Controllers
         public void Delete(int id)
         {
         }
+
+
+
+
     }
 }

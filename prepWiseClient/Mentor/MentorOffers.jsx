@@ -12,13 +12,22 @@ import NavBarMentor from "./NavBarMentor";
 import { Card, Button, TextInput, SegmentedButtons } from "react-native-paper";
 import { UserContext } from "../UserContext";
 import MentorOfferForm from "../Mentor/MentorOfferForm";
-import {apiUrlStart} from '../api';
+import CustomPopup from "../CustomPopup";
+import { apiUrlStart } from "../api";
 
 export default function MentorOffers({ navigation }) {
   const { Loggeduser } = useContext(UserContext);
+  //const apiUrlStart = "https://localhost:7137";
   const [offers, setOffers] = useState([]);
 
   const [editOffer, setEditOffer] = useState(null);
+
+  //popup section
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [popupIcon, setPopupIcon] = useState("check-circle"); // אפשר גם alert-circle
+  const [isConfirmPopup, setIsConfirmPopup] = useState(false);
+  const [confirmCallback, setConfirmCallback] = useState(null);
 
   const fetchMyOffers = async () => {
     try {
@@ -42,34 +51,6 @@ export default function MentorOffers({ navigation }) {
     navigation.navigate("CreateOffer");
   };
 
-  /*const handleSaveEdit = async () => {
-    try {
-      const response = await fetch(
-        `${apiUrlStart}/api/Mentors/MentorOfferUpdate`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(editOffer),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Offer updated!");
-        setEditOffer(null);
-        fetchOffers(); // רענון הרשימה אחרי עריכה
-      } else {
-        alert(`Error: ${data.message}`);
-      }
-    } catch (error) {
-      console.log("Error updating offer:", error);
-      alert("Error updating offer.");
-    }
-  };*/
-
   const handleDeleteOffer = async (offerId) => {
     try {
       const response = await fetch(
@@ -80,16 +61,40 @@ export default function MentorOffers({ navigation }) {
       );
 
       if (response.ok) {
-        alert("Offer deleted!");
-        fetchMyOffers(); // רענון הרשימה
+        showPopup("Offer deleted!");
+        setOffers((prevOffers) =>
+          prevOffers.filter((offer) => offer.offerID !== offerId)
+        );
       } else {
-        const data = await response.json();
-        alert(`Error deleting offer: ${data.message}`);
+        let message = `Error deleting offer.`;
+        try {
+          const text = await response.text();
+          if (text) {
+            const data = JSON.parse(text);
+            if (data?.message) message = data.message;
+          }
+        } catch (_) {}
+        showPopup(message, "alert-circle");
       }
     } catch (error) {
       console.log("Error deleting offer:", error);
-      alert("Error deleting offer.");
+      showPopup("Error deleting offer.", "alert-circle");
     }
+  };
+
+  const showPopup = (message, icon = "check-circle-outline") => {
+    setPopupMessage(message);
+    setPopupIcon(icon);
+    setIsConfirmPopup(false);
+    setPopupVisible(true);
+  };
+
+  const showConfirmPopup = (message, onConfirmAction) => {
+    setPopupMessage(message);
+    setPopupIcon("alert-circle-outline");
+    setIsConfirmPopup(true);
+    setConfirmCallback(() => onConfirmAction);
+    setPopupVisible(true);
   };
 
   return (
@@ -131,14 +136,18 @@ export default function MentorOffers({ navigation }) {
                   <Button mode="outlined" onPress={() => setEditOffer(offer)}>
                     Edit
                   </Button>
-                  {offer.status === "Active" && (
-                    <Button
-                      onPress={() => handleDeleteOffer(offer.offerID)}
-                      style={{ marginLeft: 10 }}
-                    >
-                      Delete
-                    </Button>
-                  )}
+                  <Button
+                    onPress={() =>
+                      showConfirmPopup(
+                        "Are you sure you want to delete this offer?",
+                        () => handleDeleteOffer(offer.offerID)
+                      )
+                    }
+                    style={{ marginLeft: 10 }}
+                    textColor="red"
+                  >
+                    Delete
+                  </Button>
                 </Card.Actions>
               </Card>
             ))
@@ -159,6 +168,18 @@ export default function MentorOffers({ navigation }) {
                     initialValues={editOffer}
                     onSubmit={async (updatedOffer) => {
                       try {
+                        const localDateTime =
+                          updatedOffer.dateTime &&
+                          `${updatedOffer.dateTime.getFullYear()}-${String(
+                            updatedOffer.dateTime.getMonth() + 1
+                          ).padStart(2, "0")}-${String(
+                            updatedOffer.dateTime.getDate()
+                          ).padStart(2, "0")}T${String(
+                            updatedOffer.dateTime.getHours()
+                          ).padStart(2, "0")}:${String(
+                            updatedOffer.dateTime.getMinutes()
+                          ).padStart(2, "0")}:00`;
+
                         const response = await fetch(
                           `${apiUrlStart}/api/Mentors/MentorOfferUpdate`,
                           {
@@ -170,6 +191,7 @@ export default function MentorOffers({ navigation }) {
                               ...updatedOffer,
                               OfferID: editOffer.offerID,
                               mentorUserID: Loggeduser.id,
+                              dateTime: localDateTime ?? null,
                             }),
                           }
                         );
@@ -179,11 +201,9 @@ export default function MentorOffers({ navigation }) {
 
                         if (response.ok) {
                           try {
-                            const data = await response.json(); // JSON שמכיל message
+                            const data = await response.json();
                             if (data?.message) message = data.message;
-                          } catch (e) {
-                            // במידה ואין גוף JSON — נשתמש בברירת מחדל
-                          }
+                          } catch (e) {}
 
                           alert(message);
                           setEditOffer(null);
@@ -221,6 +241,22 @@ export default function MentorOffers({ navigation }) {
           </Modal>
         )}
       </ScrollView>
+      {popupVisible && (
+        <View style={styles.overlay}>
+          <CustomPopup
+            visible={popupVisible}
+            onDismiss={() => setPopupVisible(false)}
+            icon={popupIcon}
+            message={popupMessage}
+            isConfirmation={isConfirmPopup}
+            onConfirm={() => {
+              setPopupVisible(false);
+              if (confirmCallback) confirmCallback();
+            }}
+            onCancel={() => setPopupVisible(false)}
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -316,5 +352,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 8,
     fontFamily: "Inter_200ExtraLight",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
   },
 });

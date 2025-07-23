@@ -18,6 +18,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 import { useContext } from "react";
 import { UserContext } from "../UserContext";
+import apiUrlStart from '../api'
 
 
 
@@ -25,7 +26,6 @@ import { UserContext } from "../UserContext";
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
-    const apiUrlStart ="http://localhost:5062"
 
     const [viewArchived, setViewArchived] = useState(false);
   

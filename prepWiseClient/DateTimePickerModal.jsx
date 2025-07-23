@@ -21,16 +21,20 @@ export default function DateTimePickerModal({ dateTime, setDateTime }) {
 
   const handleSave = () => {
     if (selectedDate && selectedTime) {
+      const [year, month, day] = selectedDate.split("-").map(Number);
+
       const newDateTime = new Date(
-        `${selectedDate}T${String(selectedTime.hours).padStart(
-          2,
-          "0"
-        )}:${String(selectedTime.minutes).padStart(2, "0")}:00`
+        year,
+        month - 1,
+        day,
+        selectedTime.hours,
+        selectedTime.minutes,
+        0
       );
+
       setDateTime(newDateTime);
       setModalVisible(false);
     } else {
-      // If missing either date or time
       alert("Please select both Date and Time");
     }
   };
@@ -102,6 +106,7 @@ export default function DateTimePickerModal({ dateTime, setDateTime }) {
             cancelLabel="Cancel"
             confirmLabel="Confirm"
             locale="en"
+            use24Hour={true} // ✅ עדיף ככה בארץ
           />
 
           <Button
@@ -132,7 +137,7 @@ const styles = StyleSheet.create({
   selectButtonText: {
     fontSize: 14,
     fontFamily: "Inter_200ExtraLight",
-    color: "#003D5B"
+    color: "#003D5B",
   },
   modalStyle: {
     justifyContent: "center",

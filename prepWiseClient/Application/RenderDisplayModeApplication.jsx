@@ -12,8 +12,8 @@ import { Button } from "react-native-paper";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import FileSelectorModal from "../FilesComps/FileSelectorModal";
+import apiUrlStart from '../api'
 
-const apiUrlStart ="http://localhost:5062"
 
 export default function RenderDisplayModeApplication({
   styles,

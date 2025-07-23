@@ -16,10 +16,11 @@ import { Card } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { UserContext } from "../UserContext";
 import OfferDetailsModal from "./OfferDetailsModal";
-import {apiUrlStart} from '../api';
+import { apiUrlStart } from "../api";
 
 export default function JobSeekerRelevantOffersCarousel({ navigation }) {
   const { Loggeduser } = useContext(UserContext);
+  //const apiUrlStart = "https://localhost:7137";
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,12 +48,6 @@ export default function JobSeekerRelevantOffersCarousel({ navigation }) {
       setLoading(false);
     }
   };
-
-  /*useEffect(() => {
-    if (Loggeduser?.id) {
-      fetchRelevantOffers();
-    }
-  }, [Loggeduser?.id]);*/
 
   useEffect(() => {
     if (!Loggeduser?.id) return;
@@ -112,9 +107,18 @@ export default function JobSeekerRelevantOffersCarousel({ navigation }) {
   return (
     <View>
       {/* Header + See All button */}
-      <View>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: 8,
+          marginBottom: 6,
+        }}
+      >
+        <Text style={styles.sectionTitle}>Upcoming Mentor Events 🎓</Text>
         <TouchableOpacity onPress={() => setShowAll(true)}>
-          <Text style={{ color: "#9FF9D5" ,fontFamily:'Inter_300Light', alignSelf:'flex-end',marginRight:8 }}>
+          <Text style={{ color: "#9FF9D5", fontWeight: "bold" }}>
             Explore All Events
           </Text>
         </TouchableOpacity>
@@ -252,6 +256,13 @@ export default function JobSeekerRelevantOffersCarousel({ navigation }) {
           setSelectedMentor(null);
         }}
         onRegister={async () => {
+          console.log("Trying to register with: ", {
+            offerID: selectedOffer?.offerID,
+            userID: Loggeduser?.id,
+            currentParticipants: selectedOffer?.currentParticipants,
+            maxParticipants: selectedOffer?.maxParticipants,
+          });
+
           try {
             const res = await fetch(
               `${apiUrlStart}/api/Users/RegisterToOffer`,
@@ -259,23 +270,54 @@ export default function JobSeekerRelevantOffersCarousel({ navigation }) {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  OfferID: selectedOffer.offerID,
-                  UserID: Loggeduser.id,
+                  offerID: selectedOffer.offerID, // ✅ camelCase תואם
+                  userID: Loggeduser.id,
                 }),
               }
             );
-            if (res.ok) {
+
+            // קודם נקרא כטקסט כדי למנוע קריסה אם זו לא תשובת JSON
+            const text = await res.text();
+            console.log("Server raw response:", text);
+
+            let result = null;
+
+            try {
+              result = JSON.parse(text); // ננסה לפרסר JSON
+            } catch (err) {
+              console.error("Server did not return valid JSON:", text);
+              alert("Server error: " + text);
+              return; // מפסיקים כי זה לא JSON
+            }
+
+            // ✅ בודקים success ב-camelCase
+            if (res.ok && result.success) {
+              alert("✅ You're registered!");
               setRegisteredOffers((prev) => [
                 ...prev,
                 { offerID: selectedOffer.offerID },
               ]);
-              alert("You're registered!");
+
+              // עדכון מקומי של מספר המשתתפים
+              setOffers((prev) =>
+                prev.map((offer) =>
+                  offer.offerID === selectedOffer.offerID
+                    ? {
+                        ...offer,
+                        currentParticipants: offer.currentParticipants + 1,
+                      }
+                    : offer
+                )
+              );
             } else {
-              const text = await res.text();
-              alert(text || "Error registering.");
+              // גם message ב-camelCase
+              alert(
+                result.message || "Offer is full or you are already registered."
+              );
             }
           } catch (err) {
             console.error("Register error:", err);
+            alert("❌ An error occurred while registering.");
           }
         }}
         onUnregister={async () => {

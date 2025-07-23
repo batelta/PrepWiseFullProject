@@ -178,7 +178,7 @@ export default function MentorOfferForm({
 const styles = {
   title: {
     fontSize: 20,
-  //  fontWeight: "bold",
+    fontWeight: "bold",
     fontFamily: "Inter_400Regular",
     flex: 1,
   },

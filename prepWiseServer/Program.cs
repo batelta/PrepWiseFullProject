@@ -37,6 +37,14 @@ if (true)
 
 app.UseHttpsRedirection();
 app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+//for files
+app.UseStaticFiles(new StaticFileOptions()
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(Directory.GetCurrentDirectory(), @"uploadedFiles")),
+    RequestPath = new PathString("/Images")
+});
+
 
 // In Configure method (Startup.cs) or in Program.cs
 app.UseStaticFiles();//added for wwwroot - files abilty in the prodject

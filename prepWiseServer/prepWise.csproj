@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
 	  <TargetFramework>net6.0</TargetFramework>
@@ -13,6 +13,8 @@
 
   </ItemGroup>
 <ItemGroup>
+		<Folder Include="uploadedFiles\Analytics\Graphs\" />
+		<Folder Include="uploadedFiles\userFiles\" />
 		<Folder Include="wwwroot\" />
 		<Folder Include="Uploads\UserFiles\" />
 		<Folder Include="wwwroot\Uploads\Graphs\" />

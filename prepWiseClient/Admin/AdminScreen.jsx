@@ -11,14 +11,16 @@ import {
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import NavBar from "../NavBar";
+import { apiUrlStart } from "../api";
+
 import { useFonts } from "expo-font";
 import {
   Inter_400Regular,
   Inter_300Light,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
-import {apiUrlStart} from '../api';
 
+//const apiUrlStart = "https://localhost:7137";
 
 const AdminScreen = ({ navigation }) => {
   const [fontsLoaded] = useFonts({
@@ -28,44 +30,6 @@ const AdminScreen = ({ navigation }) => {
   });
 
   const API_URL = `${apiUrlStart}/api/MentorMatching/export-feature-data`;
-
-  /*const handleDownload = async () => {
-    if (Platform.OS === "web") {
-      try {
-        const response = await fetch(API_URL);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `features_${Date.now()}.csv`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        alert("הקובץ ירד בהצלחה ✅");
-      } catch (error) {
-        console.error(error);
-        alert("ההורדה נכשלה ❌");
-      }
-    } else {
-      try {
-        const fileUri =
-          FileSystem.documentDirectory + `features_${Date.now()}.csv`;
-        const downloadRes = await FileSystem.downloadAsync(API_URL, fileUri);
-        Alert.alert("הצלחה", "הקובץ ירד בהצלחה ✅");
-
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(downloadRes.uri);
-        } else {
-          Alert.alert("הערה", "שיתוף לא זמין על המכשיר הזה");
-        }
-      } catch (error) {
-        console.error(error);
-        Alert.alert("שגיאה", "ההורדה נכשלה ❌");
-      }
-    }
-  };*/
 
   if (!fontsLoaded) return null;
 
@@ -95,6 +59,13 @@ const AdminScreen = ({ navigation }) => {
           onPress={() => navigation.navigate("AdminAllApplications")}
         >
           <Text style={styles.buttonText}>📄 View All Applications</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("HomePage")}
+        >
+          <Text style={styles.buttonText}>🏠 Go to Home Page</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

@@ -29,11 +29,11 @@ import { useContext } from "react";
 import { UserContext } from "../UserContext";
 import RenderDisplayModeApplication from "./RenderDisplayModeApplication";
 import EditModeAppliction from "./EditModeApplication";
+import apiUrlStart from '../api'
 
 
   export default function Application({ applicationID: propID }) {
     const { Loggeduser } = useContext(UserContext);
-    const apiUrlStart ="http://localhost:5062"
 
     const [User, setUser] = useState("");
     const [loading, setLoading] = useState(true);
@@ -354,8 +354,8 @@ import EditModeAppliction from "./EditModeApplication";
       try {
         const API_URL =
           Platform.OS === "web"
-            ? `${apiUrlStart}/api/Users/get-user-files?userId=${User.id}&applicationId=${applicationID}`
-            : `${apiUrlStart}/api/Users/get-user-files?userId=${User.id}&applicationId=${applicationID}`;
+            ? `${apiUrlStart}/api/Files/get-user-files?userId=${User.id}&applicationId=${applicationID}`
+            : `${apiUrlStart}/api/Files/get-user-files?userId=${User.id}&applicationId=${applicationID}`;
   
         const response = await fetch(API_URL);
         const data = await response.json();
@@ -479,8 +479,8 @@ import EditModeAppliction from "./EditModeApplication";
   
         let API_URL =
           Platform.OS === "web"
-            ? `${apiUrlStart}/api/Users/upload-file?userId=${userId}`
-            : `${apiUrlStart}/api/Users/upload-file?userId=${userId}`;
+            ? `${apiUrlStart}/api/Files/upload-file?userId=${userId}`
+            : `${apiUrlStart}/api/Files/upload-file?userId=${userId}`;
   
         if (applicationId) API_URL += `&applicationId=${applicationId}`;
   
@@ -546,7 +546,7 @@ import EditModeAppliction from "./EditModeApplication";
           try {
       
   
-            const url = `${apiUrlStart}/api/Users/unlink-file-from-application?applicationId=${applicationID}&fileId=${fileId}`;
+            const url = `${apiUrlStart}/api/Files/unlink-file-from-application?applicationId=${applicationID}&fileId=${fileId}`;
             const response = await fetch(url, { method: "DELETE" });
   
             const resultText = await response.text();

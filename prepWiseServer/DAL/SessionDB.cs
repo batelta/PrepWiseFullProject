@@ -632,47 +632,7 @@ public class SessionDB
         return sessions;
     }
 
-    /// OR NEEDS TO CHANGE HOW WE TAKE THE JOB SEEKER DETAILS 
-
-    /*
-     public List<Session> GetUpcomingSessionsForMentor(int mentorId)
-     {
-         SqlConnection con = connect("myProjDB");
-
-         Dictionary<string, object> paramDic = new Dictionary<string, object>
-         {
-             ["@MentorID"] = mentorId
-         };
-
-         SqlCommand cmd = CreateCommandWithStoredProcedureGeneral("sp_GetUpcomingSessionsForMentor", con, paramDic);
-         SqlDataReader dr = cmd.ExecuteReader();
-
-         List<Session> sessions = new List<Session>();
-         while (dr.Read())
-         {
-             Session s = new Session
-             {
-                 SessionID = (int)dr["SessionID"],
-                 JourneyID = (int)dr["JourneyID"],
-                 ScheduledAt = (DateTime)dr["ScheduledAt"],
-                 Status = dr["Status"].ToString(),
-                 Notes = dr["Notes"]?.ToString(),
-                 JobSeeker = new User
-                 {
-                     FirstName = dr["FirstName"].ToString(),
-                     LastName = dr["LastName"].ToString(),
-                     Picture = dr["Picture"]?.ToString(),
-                     UserID = (int)dr["JobSeekerID"]
-                     // תוסיפי עוד שדות אם צריך
-                 }
-             };
-             sessions.Add(s);
-         }
-
-         con.Close();
-         return sessions;
-     }
- */
+ 
 
     public bool ArchiveSession(int sessionId)
     {
@@ -737,7 +697,6 @@ public class SessionDB
             con.Close();
         }
     }
-
     public List<MentorOffer> GetMentorOffers(int? mentorUserId = null)
     {
         List<MentorOffer> offers = new List<MentorOffer>();
@@ -797,47 +756,63 @@ public class SessionDB
             con.Close();
         }
 
+        //  עדכון סטטוס לאירועים שעברו
+        foreach (var offer in offers)
+        {
+            if (offer.DateTime < DateTime.UtcNow && offer.Status == "Active")
+            {
+                offer.Status = "Completed"; // משנה את הסטטוס ברשימה שחוזרת ללקוח
+                UpdateOfferStatusInDB(offer.OfferID, "Completed"); // מעדכן ב-DB
+            }
+        }
+
         return offers;
     }
 
+    private void UpdateOfferStatusInDB(int offerId, string newStatus)
+    {
+        using (SqlConnection con = connect("myProjDB"))
+        using (SqlCommand cmd = new SqlCommand("UPDATE MentorOffer SET Status=@Status WHERE OfferID=@OfferID", con))
+        {
+            cmd.Parameters.AddWithValue("@Status", newStatus);
+            cmd.Parameters.AddWithValue("@OfferID", offerId);
+
+            cmd.ExecuteNonQuery();
+        }
+    }
+
+  
 
     public bool RegisterUserToOffer(int offerId, int userId)
     {
-        SqlConnection con = connect("myProjDB");
-
-        Dictionary<string, object> paramDic = new Dictionary<string, object>
+        using (SqlConnection con = connect("myProjDB"))
+        using (SqlCommand cmd = new SqlCommand("SP_RegisterUserToOffer", con))
         {
-            ["@OfferID"] = offerId,
-            ["@UserID"] = userId
-        };
+            cmd.CommandType = CommandType.StoredProcedure;
 
-        SqlCommand cmd = CreateCommandWithStoredProcedureGeneral("SP_RegisterUserToOffer", con, paramDic);
+            cmd.Parameters.AddWithValue("@OfferID", offerId);
+            cmd.Parameters.AddWithValue("@UserID", userId);
 
-        try
-        {
-            SqlDataReader reader = cmd.ExecuteReader();
-
-            bool success = false;
-
-            if (reader.Read())
+            SqlParameter successParam = new SqlParameter("@Success", SqlDbType.Bit)
             {
-                int result = reader.GetInt32(reader.GetOrdinal("Success"));
-                success = result == 1;
-            }
+                Direction = ParameterDirection.Output
+            };
+            cmd.Parameters.Add(successParam);
 
-            reader.Close();
+            cmd.ExecuteNonQuery();
+
+            var raw = successParam.Value;
+            Console.WriteLine("DEBUG => Raw OUTPUT: " + (raw == DBNull.Value ? "NULL" : raw.ToString()));
+
+            bool success = raw != DBNull.Value && (bool)raw;
+            Console.WriteLine("DEBUG => success bool = " + success);
+
             return success;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("RegisterUserToOffer error: " + ex.Message);
-            throw;
-        }
-        finally
-        {
-            con.Close();
-        }
     }
+
+
+
 
     public List<UserRegistrationDTO> GetMyRegistrations(int userId)
     {

@@ -18,7 +18,7 @@ import {
   Inter_100Thin,
   Inter_200ExtraLight,
 } from "@expo-google-fonts/inter";
-import {apiUrlStart} from '../api';
+import { apiUrlStart } from "../api";
 
 const FileSelectorModal = ({ visible, onClose, userId, onFileSelect }) => {
   const [files, setFiles] = useState([]);
@@ -32,13 +32,13 @@ const FileSelectorModal = ({ visible, onClose, userId, onFileSelect }) => {
     Inter_300Light,
   });
 
-///batel added for check in session page
+  ///batel added for session page
   useEffect(() => {
   if (!visible) {
     setFiles([]); // reset when modal is closed
   }
 }, [visible]);
-//////
+
   useEffect(() => {
     //fatch files evry time that the modal visible
     if (visible) fetchFiles();
@@ -47,10 +47,8 @@ const FileSelectorModal = ({ visible, onClose, userId, onFileSelect }) => {
   const fetchFiles = async () => {
     setIsLoading(true);
     try {
-      const baseUrl =`${apiUrlStart}`
-
       const response = await fetch(
-        `${baseUrl}/api/Users/get-user-files?userId=${userId}`
+        `${apiUrlStart}/api/Files/get-user-files?userId=${userId}`
       );
       const data = await response.json();
       setFiles(data); //set all the file that returned
@@ -119,42 +117,6 @@ const FileSelectorModal = ({ visible, onClose, userId, onFileSelect }) => {
       }
     }
   };
-
-  /* const pickResumeFile = async () => {
-    if (Platform.OS === "web") {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = ".pdf,.doc,.docx";
-      input.multiple = true; // ✅ מאפשר ריבוי קבצים
-
-      input.onchange = (event) => {
-        const selectedFiles = Array.from(event.target.files).map((file) => ({
-          uri: URL.createObjectURL(file),
-          name: file.name,
-          type: file.type,
-          file,
-        }));
-        onFileSelect(selectedFiles); // ⬅️ שולח מערך
-      };
-      input.click();
-    } else {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ],
-        multiple: true,
-        copyToCacheDirectory: true,
-      });
-
-      console.log("Result from DocumentPicker:", result);
-
-      if (result.type === "success") {
-        onFileSelect([result]); // ⬅️ עטוף במערך
-      }
-    }
-  };*/
 
   return (
     <Modal visible={visible} transparent animationType="fade">

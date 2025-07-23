@@ -36,12 +36,11 @@ import { UserContext } from "../UserContext";
 import FileSelectorModal from "../FilesComps/FileSelectorModal";
 import CustomPopup from "../CustomPopup";
 import StatusPickerModal from "./StatusPickerModal";
-
+import apiUrlStart from '../api'
 
   export default function AddApplication({ onSuccess }) {
     const { Loggeduser } = useContext(UserContext);
     const [userID, setUserID] = useState(null);
-    const apiUrlStart ="http://localhost:5062"
 
     useEffect(() => {
       if (Loggeduser) {
@@ -140,8 +139,8 @@ import StatusPickerModal from "./StatusPickerModal";
   
         let API_URL =
           Platform.OS === "web"
-            ? `${apiUrlStart}/api/Users/upload-file?userId=${userId}`
-            : `${apiUrlStart}/api/Users/upload-file?userId=${userId}`;
+            ? `${apiUrlStart}/api/Files/upload-file?userId=${userId}`
+            : `${apiUrlStart}/api/Files/upload-file?userId=${userId}`;
   
         if (applicationId) API_URL += `&applicationId=${applicationId}`;
   

@@ -29,12 +29,12 @@ import { useContext } from "react";
 import { UserContext } from "../UserContext";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
+import apiUrlStart from '../api'
 
 
   export default function ApplicationSplitView() {
     const route = useRoute();
     const navigation = useNavigation();
-    const apiUrlStart ="http://localhost:5062"
 
     const { startWithAddNew } = route?.params || {};
   

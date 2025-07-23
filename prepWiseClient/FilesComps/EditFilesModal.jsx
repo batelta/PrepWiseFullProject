@@ -13,7 +13,7 @@ import {
 import { FontAwesome } from "@expo/vector-icons";
 import CustomPopup from "../CustomPopup";
 import * as DocumentPicker from "expo-document-picker";
-import {apiUrlStart} from '../api';
+import { apiUrlStart } from "../api";
 
 const EditFilesModal = ({ visible, onClose, userId }) => {
   const [files, setFiles] = useState([]);
@@ -30,8 +30,8 @@ const EditFilesModal = ({ visible, onClose, userId }) => {
     try {
       const url =
         Platform.OS === "web"
-          ? `${apiUrlStart}/api/Users/get-user-files?userId=${userId}`
-          : `${apiUrlStart}/api/Users/get-user-files?userId=${userId}`;
+          ? `${apiUrlStart}/api/Files/get-user-files?userId=${userId}`
+          : `${apiUrlStart}/api/Files/get-user-files?userId=${userId}`;
 
       const response = await fetch(url);
       const data = await response.json();
@@ -46,9 +46,7 @@ const EditFilesModal = ({ visible, onClose, userId }) => {
   }, [visible]);
 
   const openFile = (filePath) => {
-    const baseUrl =`${apiUrlStart}`;
-
-    const fullUrl = `${baseUrl}${filePath}`;
+    const fullUrl = `${apiUrlStart}${filePath}`;
     Linking.openURL(encodeURI(fullUrl)).catch(() =>
       Alert.alert("Error", "Failed to open file.")
     );
@@ -65,7 +63,8 @@ const EditFilesModal = ({ visible, onClose, userId }) => {
 
   const confirmDelete = async () => {
     try {
-      const url = `${apiUrlStart}/api/Users/delete-user-file?userId=${userId}&fileId=${popup.fileId}`;
+      /*const url = `https://localhost:7137/api/Users/delete-user-file?userId=${userId}&fileId=${popup.fileId}`;*/
+      const url = `${apiUrlStart}/api/Files/delete-user-file?userId=${userId}&fileId=${popup.fileId}`;
       const response = await fetch(url, { method: "DELETE" });
 
       const text = await response.text();
@@ -105,8 +104,8 @@ const EditFilesModal = ({ visible, onClose, userId }) => {
 
       let API_URL =
         Platform.OS === "web"
-          ? `${apiUrlStart}/api/Users/upload-file?userId=${userId}`
-          : `${apiUrlStart}/api/Users/upload-file?userId=${userId}`;
+          ? `${apiUrlStart}/api/Files/upload-file?userId=${userId}`
+          : `${apiUrlStart}/api/Files/upload-file?userId=${userId}`;
 
       if (applicationId) API_URL += `&applicationId=${applicationId}`;
 

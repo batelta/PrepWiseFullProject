@@ -106,23 +106,40 @@ namespace prepWise.Controllers
         {
         }
 
+        /*  [HttpDelete]
+          [Route("MentorOffer/{offerId}")]
+          public IActionResult DeleteMentorOffer(int offerId)
+          {
+              try
+              {
+                  Mentor mentor = new Mentor();  // או Inject
+                  bool success = mentor.DeleteMentorOffer(offerId);
+
+                  if (success)
+                  {
+                      return Ok(new { message = "Offer deleted successfully" });
+                  }
+                  else
+                  {
+                      return NotFound(new { message = "Offer not found" });
+                  }
+              }
+              catch (Exception ex)
+              {
+                  return StatusCode(500, $"Internal server error: {ex.Message}");
+              }
+          }*/
+
         [HttpDelete]
         [Route("MentorOffer/{offerId}")]
         public IActionResult DeleteMentorOffer(int offerId)
         {
             try
             {
-                Mentor mentor = new Mentor();  // או Inject
-                bool success = mentor.DeleteMentorOffer(offerId);
+                Mentor mentor = new Mentor();
+                mentor.DeleteMentorOffer(offerId); // אין צורך להחזיר bool במקרה כזה
 
-                if (success)
-                {
-                    return Ok(new { message = "Offer deleted successfully" });
-                }
-                else
-                {
-                    return NotFound(new { message = "Offer not found" });
-                }
+                return NoContent(); // 204 No Content - סטנדרט למחיקה מוצלחת
             }
             catch (Exception ex)
             {
