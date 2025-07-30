@@ -16,6 +16,7 @@ using System.Reflection.PortableExecutable;
 using static Azure.Core.HttpHeader;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Azure.Core;
+using System.Drawing;
 
 
 
@@ -1500,6 +1501,50 @@ public int UpdateUserProfile(int id, User Updateuser)
                 return (result != null && result != DBNull.Value) ? Convert.ToInt32(result) : 0;
             }
         }
+
+        public class MentorCompanyDTO
+        {
+            public string CompanyName { get; set; }
+            public string CompanyCode { get; set; }
+        }
+
+        public List<MentorCompanyDTO> GetMentorCompanies()
+        {
+            List<MentorCompanyDTO> companies = new List<MentorCompanyDTO>();
+
+            try
+            {
+                using (SqlConnection con = connect("myProjDB")) // already opened inside connect()
+                {
+                    using (SqlCommand cmd = new SqlCommand("SP_mentorsCompanies", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                MentorCompanyDTO company = new MentorCompanyDTO
+                                {
+                                    CompanyName = reader["CompanyName"].ToString(),
+                                    CompanyCode = reader["CompanyCode"].ToString()
+                                };
+
+                                companies.Add(company);
+                            }
+                        }
+                    }
+                }
+
+                return companies;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
 
 
     }

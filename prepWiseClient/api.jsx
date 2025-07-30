@@ -6,4 +6,4 @@ export const apiUrlStart = Platform.OS === 'android'
 
 
   //http://localhost:5062
-    //https://proj.ruppin.ac.il/igroup11/prod/
+    //https://proj.ruppin.ac.il/igroup11/prod

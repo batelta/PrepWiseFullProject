@@ -84,7 +84,7 @@ const SignUpJobSeeker = ({navigation}) => {
       // If input is empty, clear the error message
       if (!text.trim()) {
        setPasswordError(""); // Clear error if input is empty // .test() checks if the input matches the regex pattern
-     } else if (!/[A-Za-z0-9]{5,10}$/.test(text)) {
+     } else if (!/^[A-Za-z0-9]{5,10}$/.test(text)) {
        setPasswordError("Password must be 5-10 characters.");
      } else {
        setPasswordError(""); // Clear error if input becomes valid
@@ -219,34 +219,65 @@ const SignUpJobSeeker = ({navigation}) => {
       selectedRoles,selectedStatus,selectedLanguages,
        FacebookLink,LinkedInLink,    MentoringType = "",Company = "",isHr=false
       )=>{
-        if (!FirstNametext?.trim()) {
-          setFieldErrorMessage("Please enter your first name.");
-          setFieldErrorIcon("account-outline");
-          setFieldErrorPopupVisible(true);
-          return;
-        }
-      
-        if (!LastNametext?.trim()) {
-          setFieldErrorMessage("Please enter your last name.");
-          setFieldErrorIcon("account-outline");
-          setFieldErrorPopupVisible(true);
-          return;
-        }
-      
-        if (!Emailtext?.trim()) {
-          setFieldErrorMessage("Please enter your email.");
-          setFieldErrorIcon("email-outline");
-          setFieldErrorPopupVisible(true);
-          return;
-        }
-      
-        if (!Passwordtext?.trim()) {
-          setFieldErrorMessage("Please enter your password.");
-          setFieldErrorIcon("lock-outline");
-          setFieldErrorPopupVisible(true);
-          return;
-        }
-      
+       const nameRegex = /^[A-Za-z]{1,15}$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const passwordRegex = /^[A-Za-z0-9]{5,10}$/; // 5-10 characters, letters and numbers only
+
+  // First Name validation
+  if (!FirstNametext?.trim()) {
+    setFieldErrorMessage("Please enter your first name.");
+    setFieldErrorIcon("account-outline");
+    setFieldErrorPopupVisible(true);
+    return false; // Return false to indicate validation failed
+  }
+  if (!nameRegex.test(FirstNametext.trim())) {
+    setFieldErrorMessage("First name: Only letters, up to 15 characters.");
+    setFieldErrorIcon("account-outline");
+    setFieldErrorPopupVisible(true);
+    return false;
+  }
+
+  // Last Name validation
+  if (!LastNametext?.trim()) {
+    setFieldErrorMessage("Please enter your last name.");
+    setFieldErrorIcon("account-outline");
+    setFieldErrorPopupVisible(true);
+    return false;
+  }
+  if (!nameRegex.test(LastNametext.trim())) {
+    setFieldErrorMessage("Last name: Only letters, up to 15 characters.");
+    setFieldErrorIcon("account-outline");
+    setFieldErrorPopupVisible(true);
+    return false;
+  }
+
+  // Email validation
+  if (!Emailtext?.trim()) {
+    setFieldErrorMessage("Please enter your email.");
+    setFieldErrorIcon("email-outline");
+    setFieldErrorPopupVisible(true);
+    return false;
+  }
+  if (!emailRegex.test(Emailtext.trim())) {
+    setFieldErrorMessage("Enter a valid email address.");
+    setFieldErrorIcon("email-outline");
+    setFieldErrorPopupVisible(true);
+    return false;
+  }
+
+  // Password validation - THIS IS THE KEY FIX
+  if (!Passwordtext?.trim()) {
+    setFieldErrorMessage("Please enter your password.");
+    setFieldErrorIcon("lock-outline");
+    setFieldErrorPopupVisible(true);
+    return false;
+  }
+  if (!passwordRegex.test(Passwordtext.trim())) {
+    setFieldErrorMessage("Password must be 5-10 characters long and contain only letters and numbers.");
+    setFieldErrorIcon("lock-outline");
+    setFieldErrorPopupVisible(true);
+    return false;
+  }
         if (!selectedStatus) {
           setFieldErrorMessage("Please add your experiece.");
           setFieldErrorIcon("account-check-outline");

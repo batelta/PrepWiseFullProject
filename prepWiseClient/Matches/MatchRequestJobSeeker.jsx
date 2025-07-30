@@ -332,7 +332,8 @@ const finalCompanyList = isOtherSelected
 
 
 
-<Text style={appliedStyles.inputTitle}>Do you prefer mentors from specific companies?</Text>
+<Text style={appliedStyles.inputTitle}>Do you prefer mentors from specific companies? (These are companies where our mentors currently work.)</Text>
+
 <View style= {appliedStyles.inputTitle}   >
 <CompanySelector
   selectedCompanies={selectedCompanies}

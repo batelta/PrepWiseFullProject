@@ -1,4 +1,6 @@
-﻿using prepWise.DAL;
+﻿using Microsoft.AspNetCore.Mvc;
+using prepWise.DAL;
+using static prepWise.DAL.UsersDB;
 
 namespace prepWise.BL
 {
@@ -86,6 +88,12 @@ namespace prepWise.BL
         {
             SessionDB db = new SessionDB();
             return db.GetMentorOfferById(offerID);
+        }
+        public static List<MentorCompanyDTO> GetMentorCompanies()
+        {
+            UsersDB dbs = new UsersDB();
+
+            return dbs.GetMentorCompanies();
         }
 
 

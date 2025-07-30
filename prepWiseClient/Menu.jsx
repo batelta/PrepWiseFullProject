@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Menu = ({ isVisible, onClose, navigation ,userType }) => {
       console.log("Menu userType:", userType);
@@ -38,6 +39,10 @@ const menuItems = [
 
   const handleMenuItemPress = (item) => {
     if (item.action === "logout") {
+          AsyncStorage.removeItem("user"); //מחיקת המשתמש מהלוקל סטורג
+     setTimeout(() => {
+    navigation.navigate("SignIn");
+  }, 50); // short delay to prevent race condition
       // כאן תוכלי להוסיף לוגיקה של התנתקות
       console.log("התנתקות");
     } else if (item.screen) {

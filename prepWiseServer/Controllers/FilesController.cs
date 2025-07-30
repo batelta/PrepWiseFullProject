@@ -13,76 +13,7 @@ namespace prepWise.Controllers
     public class FilesController : ControllerBase
     {
 
-        /*[ApiExplorerSettings(IgnoreApi = true)]
-
-
-        [HttpPost("upload-file")]
-        [Consumes("multipart/form-data")]
-        public IActionResult UploadFile(
-
-   [FromQuery] int userId,
-   [FromForm] IFormFile file,
-   [FromQuery] int? applicationId = null,
-   [FromQuery] int? sessionId = null,
-   [FromQuery] bool saveToFileList = true
-)
-        {
-            if (file == null || file.Length == 0)
-                return BadRequest("No file uploaded.");
-
-            try
-            {
-                var userFile = SaveUserFile(file, "Resume");
-                userFile.UserID = userId;
-
-                int fileId;
-
-                if (sessionId.HasValue)
-                {
-                    // ✅ נשתמש במה שכבר מימשנו
-                    User user = new User();
-                    fileId = user.LinkOrInsertUserFile(userFile, sessionId.Value, saveToFileList);
-                }
-                else
-                {
-                    // שימוש רגיל
-                    UsersDB db = new UsersDB();
-                    fileId = db.AddUserFile(userFile, applicationId);
-                }
-
-                return Ok(new { fileId, message = "File uploaded successfully." });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error: {ex.Message}\n\n{ex.StackTrace}");
-            }
-        }
-
-        private UserFile SaveUserFile(IFormFile file, string fileType)
-        {
-            var uploadFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles", "UserFiles");
-            Directory.CreateDirectory(uploadFolder);
-
-            var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
-            var fullPath = Path.Combine(uploadFolder, uniqueFileName);
-
-            using (var stream = new FileStream(fullPath, FileMode.Create))
-            {
-                file.CopyTo(stream);
-            }
-
-            // יצירת נתיב נגיש דרך HTTP (ולא קובץ פיזי מקומי בלבד)
-            var relativeUrlPath = $"/Images/UserFiles/{uniqueFileName}";
-
-            return new UserFile
-            {
-                FileName = file.FileName,
-                FilePath = relativeUrlPath, // כך תוכל להציג את הקובץ דרך דפדפן
-                FileType = fileType,
-                UploadedAt = DateTime.Now,
-                IsDefault = true
-            };
-        }*/
+       
         [ApiExplorerSettings(IgnoreApi = true)]
         [HttpPost("upload-file")]
         [Consumes("multipart/form-data")]
@@ -213,20 +144,7 @@ namespace prepWise.Controllers
         }
 
 
-        /*  [HttpPost("UploadSessionFile")]
-          public IActionResult UploadSessionFile([FromBody] UserFile file, int sessionId, bool saveToFileList)
-          {
-              try
-              {
-                  User user = new User();
-                  int fileId = user.LinkOrInsertUserFile(file, sessionId, saveToFileList);
-                  return Ok(new { FileID = fileId });
-              }
-              catch (Exception ex)
-              {
-                  return BadRequest(new { error = ex.Message });
-              }
-          }*/
+        
         [HttpPost("UploadSessionFile")]
         public IActionResult UploadSessionFile([FromBody] UserFile file, int sessionId, bool saveToFileList)
         {
@@ -260,7 +178,16 @@ namespace prepWise.Controllers
             {
                 User user = new User();
                 var files = user.GetSessionFiles(sessionId);
-                return Ok(new { files = files });
+                // Convert to camelCase for JavaScript consumption
+                var formattedFiles = files.Select(f => new {
+                    fileID = f.FileID,
+                    fileName = f.FileName,
+                    filePath = f.FilePath,
+                    fileType = f.FileType,
+                    userID = f.UserID
+                }).ToList();
+
+                return Ok(new { files = formattedFiles });
             }
             catch (Exception ex)
             {

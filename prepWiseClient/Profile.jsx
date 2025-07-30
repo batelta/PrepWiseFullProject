@@ -14,11 +14,11 @@ import {
 } from "react-native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
 import NavBar from "./NavBar";
 import NavBarMentor from "./Mentor/NavBarMentor";
 import EditFilesModal from "./FilesComps/EditFilesModal";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useFonts } from "expo-font";
 import {
@@ -30,6 +30,7 @@ import {
 } from "@expo-google-fonts/inter";
 import CustomPopup from "./CustomPopup";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Linking } from 'react-native';
 
 import { useContext } from "react";
 import { UserContext } from "./UserContext"; // adjust the path
@@ -52,6 +53,7 @@ const Profile = () => {
   });
 
   const [popupVisible, setPopupVisible] = useState(false);
+    const [expanded, setExpanded] = useState(false);
 
   const navigation = useNavigation();
 
@@ -163,7 +165,7 @@ if (!response.ok) {
   //log out function
   const handleLogOut = async () => {
     await AsyncStorage.removeItem("user"); //מחיקת המשתמש מהלוקל סטורג
-    setLoggedUser(null);
+  //  setLoggedUser(null);
      setTimeout(() => {
     navigation.navigate("SignIn");
   }, 50); // short delay to prevent race condition
@@ -246,7 +248,8 @@ if (!response.ok) {
                 </Text>
               </TouchableOpacity>
               {/**CONTACT US */}
-              <TouchableOpacity style={styles.option}>
+              <TouchableOpacity style={styles.option}
+               onPress={() => setExpanded(!expanded)}>
                 <Text style={styles.optionText}>
                   <MaterialCommunityIcons
                     name="message-processing-outline"
@@ -256,6 +259,76 @@ if (!response.ok) {
                   Contact us
                 </Text>
               </TouchableOpacity>
+
+    {/* EXPANDED CONTACT INFO */}
+{expanded && (
+  <View style={styles.contactInfo}>
+    <Text style={styles.contactText}>✨ Batel Tesema ✨</Text>
+    <View style={styles.iconRow}>
+      <MaterialCommunityIcons
+        name="email-outline"
+        size={20}
+        color="#003D5B"
+        onPress={() => Linking.openURL('mailto:bateltasama3@gmail.com')}
+      />
+      <Text style={styles.emailText}> bateltasama3@gmail.com</Text>
+    </View>
+    <View style={styles.iconRow}>
+      <MaterialCommunityIcons
+        name="linkedin"
+        size={20}
+        color="#003D5B"
+        onPress={() => Linking.openURL('https://www.linkedin.com/in/batel-tesema/')}
+      />
+      <Text style={styles.emailText}> LinkedIn</Text>
+    </View>
+
+    {/* Repeat for others */}
+    <Text style={styles.contactText}>✨ Shahar Hekter ✨</Text>
+    <View style={styles.iconRow}>
+      <MaterialCommunityIcons
+        name="email-outline"
+        size={20}
+        color="#003D5B"
+        onPress={() => Linking.openURL('mailto:shahar.hekter@gmail.com')}
+      />
+      <Text style={styles.emailText}> shahar.hekter@gmail.com</Text>
+    </View>
+    <View style={styles.iconRow}>
+      <MaterialCommunityIcons
+        name="linkedin"
+        size={20}
+        color="#003D5B"
+        onPress={() => Linking.openURL('http://linkedin.com/in/shaharhekter')}
+      />
+      <Text style={styles.emailText}> LinkedIn</Text>
+    </View>
+
+    <Text style={styles.contactText}>✨ Or Elbaz ✨</Text>
+    <View style={styles.iconRow}>
+      <MaterialCommunityIcons
+        name="email-outline"
+        size={20}
+        color="#003D5B"
+        onPress={() => Linking.openURL('mailto:Or3951@gmail.com')}
+      />
+      <Text style={styles.emailText}> Or3951@gmail.com</Text>
+    </View>
+    <View style={styles.iconRow}>
+      <MaterialCommunityIcons
+        name="linkedin"
+        size={20}
+        color="#003D5B"
+        onPress={() => Linking.openURL('http://linkedin.com/in/or-elbaz-823278328')}
+      />
+      <Text style={styles.emailText}> LinkedIn</Text>
+    </View>
+  </View>
+)}
+
+
+
+
               {/**PRIVACY POLICY */}
               <TouchableOpacity style={styles.option}>
                 <Text style={styles.optionText}>
@@ -381,6 +454,24 @@ name: {
     alignItems: "center",
     paddingVertical: 10,
   },
+iconRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 5,
+},
+emailText: {
+  marginLeft: 6,
+  color: '#003D5B',
+},
+  contactInfo: {
+    paddingLeft: 32,
+    paddingBottom: 10,
+  },
+  contactText: {
+    fontSize: 14,
+    color: "#444",
+    marginTop: 4,
+  },
   optionText: {
     fontSize: 16,
     fontFamily: "Inter_300Light",
@@ -397,11 +488,12 @@ name: {
     width: Platform.OS === "web" ? "90%" : "100%",
     marginLeft: Platform.OS === "web" ? "500px" : 40,
     marginRight: Platform.OS === "web" ? 0 : 0,
+
     transform: Platform.OS === "web" ? [{ translateY: -400 }] : [],
   },
 
   cardContainer: {
-    height: "50%",
+    height: "60%",
     width: Platform.OS === "web" ? "85%" : "100%",
     marginRight: Platform.OS === "web" ? 0 : 30,
     backgroundColor: Platform.OS === "web" ? "white" : "null",

@@ -186,5 +186,13 @@ namespace prepWise.Controllers
             }
         }
 
+        [HttpGet("companies")]
+        public IActionResult GetMentorCompanies()
+        {
+            var companies = Mentor.GetMentorCompanies();
+            return Ok(companies);
+        }
+
+
     }
 }

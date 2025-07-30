@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import MultiSelect from 'react-native-multiple-select';
-import companies from './Company.json'; // use your actual file path here
+//import companies from './Company.json'; // use your actual file path here
 import { useFonts } from 'expo-font';
 import {
   Inter_400Regular,
@@ -10,9 +10,32 @@ import {
   Inter_100Thin,
   Inter_200ExtraLight
 } from '@expo-google-fonts/inter';
+import {apiUrlStart} from './api';
 
 const CompanySelector = ({ selectedCompanies, setSelectedCompanies, style }) => {
   const [selectedItems, setSelectedItems] = useState([]);
+
+const [companies, setCompanies] = useState([]);
+
+useEffect(() => {
+  fetch(`${apiUrlStart}/api/Mentors/companies`)
+    .then(res => res.json())
+    .then(data => {
+      const formatted = data.map(c => ({
+        code: c.companyCode,
+        name: c.companyName
+      }));
+      // Always add "Other" at the end
+      setCompanies([...formatted, { code: "other", name: "Other" }]);
+    })
+    .catch(err => {
+      console.error("Failed to load companies", err);
+      // fallback: show only "Other"
+      setCompanies([{ code: "other", name: "Other" }]);
+    });
+}, []);
+
+
 
   const onSelectedItemsChange = (selectedItems) => {
     setSelectedItems(selectedItems);

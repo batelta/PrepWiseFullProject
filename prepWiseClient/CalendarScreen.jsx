@@ -12,7 +12,7 @@ import { Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 
-export default function CalendarScreen({ onMeetingSaved }) {
+export default function CalendarScreen({ onMeetingSaved, otherParticipantEmail } ) {
   const { Loggeduser } = useContext(UserContext);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -34,6 +34,16 @@ export default function CalendarScreen({ onMeetingSaved }) {
     Inter_300Light
   });
 
+
+
+  //addition 
+   // Auto-fill the other participant's email when component mounts or when otherParticipantEmail changes
+  useEffect(() => {
+    if (otherParticipantEmail && otherParticipantEmail.trim() !== '') {
+      setEmailInput(otherParticipantEmail.toLowerCase().trim());
+    }
+  }, [otherParticipantEmail]);
+  //
   useEffect(() => {
     if (!Loggeduser?.email) return;
 
@@ -151,7 +161,10 @@ export default function CalendarScreen({ onMeetingSaved }) {
       // Reset fields
       setTitle('');
       setSelectedTime(null);
-      setEmailInput('');
+      // Only reset email input if it wasn't auto-filled
+      if (!otherParticipantEmail) {
+        setEmailInput('');
+      }
       setEditingMeetingId(null);
       setDuration('');
 

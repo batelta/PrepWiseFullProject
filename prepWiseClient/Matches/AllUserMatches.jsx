@@ -22,6 +22,7 @@ const AllUserMatches = () => {
   const [mentors, setMentors] = useState(null);
   const navigation = useNavigation();
     const [userType, setUserType] = useState('');
+    const [otherUserEmail, setOtherUserEmail] = useState('');
 
 //FONTS
    const [fontsLoaded] = useFonts({
@@ -120,14 +121,16 @@ useEffect(() => {
   }, [Loggeduser,userType]);
 
   //////לסדר שאנחנו רוצים בלחיצה על מנטור ספציפי לעבור לסשנים שלו!
-  const handleMentorPress = (jobseekerID,mentorID,JourneyID,FirstName,LastName) => {
+  const handleMentorPress = (jobseekerID,mentorID,JourneyID,FirstName,LastName,Email) => {
     console.log("journeyID:",JourneyID)
     navigation.navigate("SessionSplitView", {
         jobseekerID: jobseekerID,
         mentorID: mentorID,
         JourneyID: JourneyID,
         FirstName:FirstName,
-        LastName:LastName
+        LastName:LastName,
+       otherUserEmail:Email
+
       });  
     };
 
@@ -188,7 +191,7 @@ useEffect(() => {
           {/* Sessions Button */}
           <TouchableOpacity 
             style={appliedStyles.actionButton}
-            onPress={() => handleMentorPress(item.JobSeekerID, item.MentorID, item.JourneyID,item.FirstName,item.LastName)}
+            onPress={() => handleMentorPress(item.JobSeekerID, item.MentorID, item.JourneyID,item.FirstName,item.LastName,item.Email)}
           >
             <Ionicons name="calendar-outline" size={20} color="#4A90E2" />
             <Text style={appliedStyles.buttonText}>Sessions</Text>

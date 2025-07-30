@@ -39,6 +39,7 @@ export default function Session(props){
     JourneyID,
     setSessionId,
     OtherUserName,
+    otherUserEmail,
     onSessionCreated,
   } = {
     ...props,
@@ -240,6 +241,7 @@ const fetchFeedbackDetails = async () => {
       setFeedbackText(data.comment);
       setRating(data.rating);
       setExistingFeedback(true); // mark as update mode
+      
     } else {
       console.log("No feedback found.");
     }
@@ -597,7 +599,6 @@ const addTask = async () => {
     const mentorRes = await fetch(`${apiUrlStart}/api/Users?userId=${mentorID}`);
     const mentorData = await mentorRes.json();
     const mentorFullName = `${mentorData.firstName || ''} ${mentorData.lastName || ''}`.trim() || 'Unknown Mentor';
-
     // שמירה ב-Firebase עם כל המידע הנדרש
     await addDoc(collection(db, "tasks"), {
       taskID: data.taskID,
@@ -804,7 +805,8 @@ const isValidMeetingLink = (link) => {
            <Text style={[appliedStyles.subtitlesmall, { color: '#888', fontStyle: 'italic', marginBottom: 8 }]}>
   Both sides can view and update the meeting date&time.
 </Text>
-                         <CalendarScreen onMeetingSaved={handleMeetingSaved} />
+                         <CalendarScreen onMeetingSaved={handleMeetingSaved} 
+                           otherParticipantEmail={otherUserEmail}/>
 
                <View style={appliedStyles.inputBlock}>
 <Text style={appliedStyles.subtitle}>Link 🔗</Text>

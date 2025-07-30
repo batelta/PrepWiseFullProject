@@ -24,7 +24,7 @@ import {apiUrlStart} from '../api';
 
 export default function SessionSplitView() {
   const route = useRoute();
-  const { jobseekerID, mentorID, JourneyID ,FirstName,LastName,initialSessionId} = route.params;
+  const { jobseekerID, mentorID, JourneyID ,FirstName,LastName,initialSessionId,otherUserEmail} = route.params;
 
   console.log("🔍 route params:", route.params);
 
@@ -61,6 +61,7 @@ const [errpopupMessage, setErrPopupMessage] = useState('');
       const data = await response.json();
       setSessions(data || []);
       console.log(data)
+   
       /*if (data.length > 0) setSelectedId(data[0].sessionID);
       else {
         console.log("no sessions yet!")
@@ -312,6 +313,7 @@ setErrorPopupVisible(true);
       mentorID={mentorID}
       JourneyID={JourneyID}
       OtherUserName={FirstName}
+      otherUserEmail={otherUserEmail}
     />
 ) : selectedId && selectedId !== "add" && selectedId !== "new" ? (
       <Session
@@ -322,6 +324,8 @@ setErrorPopupVisible(true);
       mentorID={mentorID}
       JourneyID={JourneyID}
       OtherUserName={FirstName}
+     otherUserEmail={otherUserEmail}
+
     />
   ) : null}
 </View>
